@@ -13,15 +13,34 @@
 <body>
 <header class="topo"><div class="topo-in"><a href="../" aria-label="Boom Games — página inicial"><img src="../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../" class="esconde">Loja</a><a href="../campeonatos/">Campeonatos</a></nav></div></header>
 <main>
-<div class="estreito">
-<section class="cartao destaque cut" aria-labelledby="t">
-<div class="pilha" style="gap:6px"><span class="olho">CONTA DE JOGADOR</span><h1 id="t">Entrar</h1><p class="sub">Use sua conta do Discord ou do Google. É rápido e você não precisa criar senha.</p></div>
-<button type="button" class="btn discord largo" data-provedor="discord"><span class="marca-ico" aria-hidden="true">D</span>Continuar com Discord</button>
-<button type="button" class="btn google largo" data-provedor="google"><span class="marca-ico" aria-hidden="true">G</span>Continuar com Google</button>
-<p id="msg" class="erro" role="alert" hidden></p>
-<p class="ajuda">No primeiro acesso, você escolhe seu nick e completa o perfil. Ao entrar, você concorda com os <a href="../termos/">Termos de uso</a> e a <a href="../privacidade/">Política de privacidade</a>.</p>
-</section>
+</main>
+<section class="arena" aria-labelledby="t">
+<div class="brilho" aria-hidden="true"></div><span class="contorno" aria-hidden="true">PLAYER</span>
+<div class="arena-in">
+<div class="arena-txt">
+<span class="olho">ARENA BOOM GAMES</span>
+<h1 id="t">Entre na<br><span>arena</span></h1>
+<p class="sub" style="font-size:18px;max-width:470px">Uma conta só para tudo na Boom Games: campeonatos, equipe, histórico e ranking.</p>
+<ul class="vantagens">
+<li><b>01</b><span>Seu nick registrado e protegido</span></li>
+<li><b>02</b><span>Monte sua equipe e dispute a Copa Boom</span></li>
+<li><b>03</b><span>Histórico de partidas, títulos e ranking</span></li>
+</ul>
 </div>
+<div class="acesso">
+<div class="cartao cut destaque">
+<div class="pilha" style="gap:6px"><span class="olho">CONTA DE JOGADOR</span><h2 style="font-size:32px">Entrar</h2><p class="sub">Escolha como quer entrar. No primeiro acesso, você cria seu perfil.</p></div>
+<button type="button" class="btn discord social largo" data-provedor="discord"><span class="marca-ico" aria-hidden="true">D</span>Continuar com Discord<span class="seta" aria-hidden="true">→</span></button>
+<button type="button" class="btn google social largo" data-provedor="google"><span class="marca-ico" aria-hidden="true">G</span>Continuar com Google<span class="seta" aria-hidden="true">→</span></button>
+<p id="msg" class="erro" role="alert" hidden></p>
+<div class="divisor">SEM SENHA</div>
+<div class="seguro"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="1"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg><span>Você entra pela sua conta do Discord ou do Google. A Boom Games nunca vê nem guarda sua senha.</span></div>
+<p class="ajuda">Ao entrar, você concorda com os <a href="../termos/">Termos de uso</a> e a <a href="../privacidade/">Política de privacidade</a>.</p>
+</div>
+</div>
+</div>
+</section>
+<main hidden>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/config.js"></script>
