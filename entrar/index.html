@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar · Boom Games</title>
+<link rel="icon" href="../assets/img/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/img/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../" aria-label="Boom Games — página inicial"><img src="../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../" class="esconde">Loja</a><a href="../campeonatos/">Campeonatos</a></nav></div></header>
+<main>
+<div class="estreito">
+<section class="cartao destaque cut" aria-labelledby="t">
+<div class="pilha" style="gap:6px"><span class="olho">CONTA DE JOGADOR</span><h1 id="t">Entrar</h1><p class="sub">Use sua conta do Discord ou do Google. É rápido e você não precisa criar senha.</p></div>
+<button type="button" class="btn discord largo" data-provedor="discord"><span class="marca-ico" aria-hidden="true">D</span>Continuar com Discord</button>
+<button type="button" class="btn google largo" data-provedor="google"><span class="marca-ico" aria-hidden="true">G</span>Continuar com Google</button>
+<p id="msg" class="erro" role="alert" hidden></p>
+<p class="ajuda">No primeiro acesso, você escolhe seu nick e completa o perfil. Ao entrar, você concorda com os <a href="../termos/">Termos de uso</a> e a <a href="../privacidade/">Política de privacidade</a>.</p>
+</section>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(async function () {
+  var s = await BOOM.sessao();
+  if (s) { location.replace(BOOM.url('conta/')); return; }
+  document.querySelectorAll('[data-provedor]').forEach(function (b) {
+    b.addEventListener('click', async function () {
+      b.disabled = true;
+      var r = await BOOM.login(b.dataset.provedor, 'conta/');
+      if (r.error) { b.disabled = false; var m = BOOM.$('msg'); m.textContent = 'Não foi possível entrar: ' + r.error.message; m.hidden = false; }
+    });
+  });
+})();
+</script>
+</body>
+</html>

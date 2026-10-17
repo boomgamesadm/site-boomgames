@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minha conta · Boom Games</title>
+<link rel="icon" href="../assets/img/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/img/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../" aria-label="Boom Games — página inicial"><img src="../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../" class="esconde">Loja</a><a href="../campeonatos/">Campeonatos</a></nav></div></header>
+<main>
+<div class="medio">
+<div data-tela="carregando" class="carregando">Carregando sua conta…</div>
+
+<section data-tela="perfil" hidden class="cartao destaque cut" aria-labelledby="tp">
+<div class="pilha" style="gap:6px"><span class="olho" id="olho-perfil">PRIMEIRO ACESSO</span><h1 id="tp">Seu perfil de jogador</h1><p class="sub" id="sub-perfil">É assim que você aparece nas equipes, no chaveamento e no ranking.</p></div>
+<form id="form-perfil" class="pilha" novalidate>
+<div class="campo"><label for="nick">Nick</label><input id="nick" type="text" autocomplete="nickname" maxlength="16" aria-describedby="nick-msg" placeholder="ex.: brasa"><span id="nick-msg" class="ajuda">De 3 a 16 caracteres: letras, números, ponto ou _. Depois de salvo, só a organização troca.</span></div>
+<div class="grade">
+<div class="campo"><label for="nome">Nome completo</label><input id="nome" type="text" autocomplete="name"></div>
+<div class="campo"><label for="nasc">Data de nascimento</label><input id="nasc" type="date"></div>
+<div class="campo"><label for="zap">WhatsApp</label><input id="zap" type="tel" autocomplete="tel" placeholder="(85) 9 0000-0000"></div>
+<div class="campo"><label for="cidade">Cidade</label><input id="cidade" type="text" value="Fortaleza"></div>
+</div>
+<fieldset style="border:0;margin:0;padding:0" class="pilha"><legend class="rotulo" style="margin-bottom:10px">Jogos que você joga</legend><div class="chips" id="jogos"><button type="button" class="chip" aria-pressed="false" data-jogo="Valorant">Valorant</button><button type="button" class="chip" aria-pressed="false" data-jogo="Counter-Strike 2">Counter-Strike 2</button><button type="button" class="chip" aria-pressed="false" data-jogo="EA Sports FC">EA Sports FC</button><button type="button" class="chip" aria-pressed="false" data-jogo="Fortnite">Fortnite</button><button type="button" class="chip" aria-pressed="false" data-jogo="League of Legends">League of Legends</button><button type="button" class="chip" aria-pressed="false" data-jogo="Rocket League">Rocket League</button><button type="button" class="chip" aria-pressed="false" data-jogo="Simulador / Cockpit">Simulador / Cockpit</button><button type="button" class="chip" aria-pressed="false" data-jogo="Realidade virtual">Realidade virtual</button></div></fieldset>
+<div id="bloco-resp" hidden class="pilha aviso">
+<span>Você tem menos de 18 anos. Pedimos o contato de um responsável, que acompanha as inscrições.</span>
+<div class="grade"><div class="campo"><label for="rnome">Nome do responsável</label><input id="rnome" type="text"></div><div class="campo"><label for="rzap">WhatsApp do responsável</label><input id="rzap" type="tel"></div></div>
+</div>
+<label class="check" id="bloco-termos"><input type="checkbox" id="termos"><span>Li e aceito os <a href="../termos/" target="_blank">Termos de uso</a> e a <a href="../privacidade/" target="_blank">Política de privacidade</a>.</span></label>
+<p id="form-msg" class="erro" role="alert" hidden></p>
+<div class="linha entre"><button type="button" class="btn sec" id="cancelar" hidden>Cancelar</button><button type="submit" class="btn" id="salvar">Salvar perfil</button></div>
+</form>
+</section>
+
+<div data-tela="painel" hidden class="pilha" style="gap:22px">
+<section class="cartao cut" style="background:linear-gradient(120deg,rgba(255,122,26,.22),#131315 55%)">
+<div class="linha" style="gap:20px">
+<div class="cut-sm" style="width:84px;height:84px;background:#0A0A0B;border:2px solid var(--laranja);display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:36px" id="avatar">?</div>
+<div class="pilha" style="gap:4px;flex:1 1 220px"><span class="olho">MINHA CONTA</span><h1 id="p-nick">@</h1><span class="sub" id="p-info"></span></div>
+<div class="linha"><button type="button" class="btn sec" id="editar">Editar dados</button><button type="button" class="btn sec" id="sair">Sair</button></div>
+</div>
+</section>
+<section class="cartao cut"><h2>Minhas inscrições e convites</h2><p class="sub">Em breve: aqui você vai acompanhar suas equipes, inscrições, pagamentos e convites dos campeonatos Copa Boom.</p><a class="btn" href="../campeonatos/" style="align-self:flex-start">Ver campeonatos</a></section>
+<p class="ajuda">Seu nome completo, WhatsApp e data de nascimento nunca aparecem no site. Só o seu nick, cidade e jogos são públicos.</p>
+</div>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(async function () {
+  var $ = BOOM.$, db = BOOM.db;
+  var s = await BOOM.sessao();
+  if (!s) { location.replace(BOOM.url('entrar/')); return; }
+  var uid = s.user.id, perfil = null, jogos = new Set();
+  var REG = /^[A-Za-z0-9_.]{3,16}$/;
+
+  async function carregar() {
+    var r = await db.from('perfis').select('*').eq('id', uid).maybeSingle();
+    if (r.error) { alert('Erro ao carregar seu perfil: ' + r.error.message); return; }
+    perfil = r.data || {};
+    if (!perfil.nick) abrirForm(true); else desenharPainel();
+  }
+  function desenharPainel() {
+    $('p-nick').textContent = '@' + perfil.nick;
+    $('avatar').textContent = perfil.nick[0].toUpperCase();
+    var partes = [];
+    if (perfil.jogos && perfil.jogos.length) partes.push(perfil.jogos.join(' · '));
+    if (perfil.cidade) partes.push(perfil.cidade);
+    $('p-info').textContent = partes.join(' — ');
+    BOOM.mostrar('painel');
+  }
+  function abrirForm(primeiro) {
+    $('nick').value = perfil.nick || ''; $('nick').disabled = !!perfil.nick;
+    $('nome').value = perfil.nome || (s.user.user_metadata && (s.user.user_metadata.full_name || s.user.user_metadata.name)) || '';
+    $('nasc').value = perfil.nascimento || ''; $('zap').value = perfil.whatsapp || '';
+    $('cidade').value = perfil.cidade || 'Fortaleza';
+    $('rnome').value = perfil.responsavel_nome || ''; $('rzap').value = perfil.responsavel_whatsapp || '';
+    jogos = new Set(perfil.jogos || []);
+    document.querySelectorAll('[data-jogo]').forEach(function (b) { b.setAttribute('aria-pressed', jogos.has(b.dataset.jogo) ? 'true' : 'false'); });
+    $('bloco-termos').hidden = !primeiro; $('cancelar').hidden = primeiro;
+    $('olho-perfil').textContent = primeiro ? 'PRIMEIRO ACESSO' : 'EDITAR DADOS';
+    $('nick-msg').textContent = perfil.nick ? 'Para trocar o nick, fale com a organização.' : 'De 3 a 16 caracteres: letras, números, ponto ou _. Depois de salvo, só a organização troca.';
+    atualizarMenor(); BOOM.mostrar('perfil');
+  }
+  function atualizarMenor() { var i = BOOM.idade($('nasc').value); $('bloco-resp').hidden = !(i !== null && i < 18); }
+  $('nasc').addEventListener('change', atualizarMenor);
+  document.querySelectorAll('[data-jogo]').forEach(function (b) {
+    b.addEventListener('click', function () { var j = b.dataset.jogo; if (jogos.has(j)) jogos.delete(j); else jogos.add(j); b.setAttribute('aria-pressed', jogos.has(j) ? 'true' : 'false'); });
+  });
+  var tNick = null;
+  $('nick').addEventListener('input', function () {
+    var v = $('nick').value.replace(/\s/g, ''); $('nick').value = v; var m = $('nick-msg');
+    clearTimeout(tNick);
+    if (!REG.test(v)) { m.className = 'ajuda'; m.textContent = 'De 3 a 16 caracteres: letras, números, ponto ou _.'; return; }
+    m.className = 'ajuda'; m.textContent = 'Verificando…';
+    tNick = setTimeout(async function () {
+      var r = await db.from('jogadores_publicos').select('id').eq('nick', v).maybeSingle();
+      if (r.data && r.data.id !== uid) { m.className = 'erro'; m.textContent = '✕ @' + v + ' já está em uso.'; }
+      else { m.className = 'ok'; m.textContent = '✓ @' + v + ' está disponível.'; }
+    }, 400);
+  });
+  $('cancelar').addEventListener('click', desenharPainel);
+  $('editar').addEventListener('click', function () { abrirForm(false); });
+  $('sair').addEventListener('click', function () { BOOM.sair(''); });
+
+  $('form-perfil').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = $('form-msg'); msg.hidden = true;
+    function falha(t) { msg.textContent = t; msg.hidden = false; }
+    var nick = $('nick').value.trim();
+    if (!perfil.nick && !REG.test(nick)) return falha('Escolha um nick válido (3 a 16 caracteres: letras, números, ponto ou _).');
+    if (!$('nome').value.trim()) return falha('Informe seu nome completo.');
+    if (!$('nasc').value) return falha('Informe sua data de nascimento.');
+    if ($('zap').value.replace(/\D/g, '').length < 10) return falha('Informe um WhatsApp com DDD.');
+    var menor = BOOM.idade($('nasc').value) < 18;
+    if (menor && (!$('rnome').value.trim() || $('rzap').value.replace(/\D/g, '').length < 10)) return falha('Como você tem menos de 18 anos, informe o nome e o WhatsApp de um responsável.');
+    if (!$('bloco-termos').hidden && !$('termos').checked) return falha('Para continuar, aceite os Termos de uso e a Política de privacidade.');
+    var dados = { nome: $('nome').value.trim(), nascimento: $('nasc').value, whatsapp: $('zap').value.trim(), cidade: $('cidade').value.trim(),
+      jogos: Array.from(jogos), responsavel_nome: menor ? $('rnome').value.trim() : null, responsavel_whatsapp: menor ? $('rzap').value.trim() : null };
+    if (!perfil.nick) { dados.nick = nick; dados.aceitou_termos_em = new Date().toISOString(); }
+    $('salvar').disabled = true;
+    var r = await db.from('perfis').update(dados).eq('id', uid).select().maybeSingle();
+    $('salvar').disabled = false;
+    if (r.error) {
+      if (r.error.code === '23505') return falha('Esse nick acabou de ser usado por outra pessoa. Escolha outro.');
+      return falha('Não foi possível salvar: ' + r.error.message);
+    }
+    perfil = r.data; desenharPainel();
+  });
+  carregar();
+})();
+</script>
+</body>
+</html>

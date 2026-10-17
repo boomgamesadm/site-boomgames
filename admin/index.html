@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel administrativo · Boom Games</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../assets/img/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/img/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../" aria-label="Boom Games — página inicial"><img src="../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../">Ver site</a></nav></div></header>
+<main>
+<div data-tela="carregando" class="carregando">Verificando acesso…</div>
+
+<div data-tela="login" hidden class="estreito"><section class="cartao destaque cut">
+<div class="pilha" style="gap:6px"><span class="olho">ÁREA RESTRITA</span><h1>Painel da loja</h1><p class="sub">Entre com a conta de administrador.</p></div>
+<button type="button" class="btn google largo" data-provedor="google"><span class="marca-ico" aria-hidden="true">G</span>Entrar com Google</button>
+<button type="button" class="btn discord largo" data-provedor="discord"><span class="marca-ico" aria-hidden="true">D</span>Entrar com Discord</button>
+</section></div>
+
+<div data-tela="negado" hidden class="estreito"><section class="cartao cut">
+<span class="olho">ACESSO NEGADO</span><h1>Conta sem permissão</h1>
+<p class="sub">Esta conta não é de administrador. Se você faz parte da equipe, peça para um administrador liberar seu acesso.</p>
+<p class="ajuda" id="negado-email"></p>
+<button type="button" class="btn sec" data-sair>Sair e entrar com outra conta</button>
+</section></div>
+
+<div data-tela="mfa-novo" hidden class="estreito"><section class="cartao destaque cut">
+<span class="olho">PRIMEIRO ACESSO · SEGURANÇA</span><h1>Ative a verificação em duas etapas</h1>
+<p class="sub">1. Instale um aplicativo autenticador no celular (Google Authenticator ou Microsoft Authenticator).<br>2. No aplicativo, toque em <strong>+</strong> e leia este QR Code.<br>3. Digite abaixo o código de 6 números que aparecer.</p>
+<div style="align-self:center;background:#fff;padding:12px"><img id="qr" alt="QR Code para o aplicativo autenticador" width="200" height="200"></div>
+<p class="ajuda">Não consegue ler o QR? Digite este código no aplicativo: <code id="segredo" style="color:#fff;word-break:break-all"></code></p>
+<div class="campo"><label for="cod-novo">Código de 6 números</label><input id="cod-novo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="font-family:'Chakra Petch',sans-serif;font-size:28px;letter-spacing:10px;text-align:center"></div>
+<p class="erro" id="msg-novo" role="alert" hidden></p>
+<button type="button" class="btn largo" id="ativar">Ativar e entrar no painel</button>
+</section></div>
+
+<div data-tela="mfa" hidden class="estreito"><section class="cartao destaque cut">
+<span class="olho">VERIFICAÇÃO EM DUAS ETAPAS</span><h1>Digite o código</h1>
+<p class="sub">Abra o aplicativo autenticador no celular e digite o código de 6 números.</p>
+<div class="campo"><label for="cod" class="sr">Código de 6 números</label><input id="cod" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="font-family:'Chakra Petch',sans-serif;font-size:32px;letter-spacing:12px;text-align:center"></div>
+<p class="erro" id="msg-mfa" role="alert" hidden></p>
+<button type="button" class="btn largo" id="verificar">Entrar no painel</button>
+<button type="button" class="btn sec" data-sair>Sair</button>
+</section></div>
+
+<div data-tela="painel" hidden class="pilha" style="gap:24px">
+<div class="linha entre"><div class="pilha" style="gap:4px"><span class="olho">PAINEL ADMINISTRATIVO</span><h1>Dados da loja</h1></div>
+<div class="linha"><span class="selo lin">🔒 VERIFICADO</span><a class="btn sec" href="../">Ver site ↗</a><button type="button" class="btn sec" data-sair>Sair</button></div></div>
+<p class="ajuda">Nesta fase o painel já edita os dados da loja e as marcas parceiras. Campeonatos, inscrições e resultados chegam nas próximas fases.</p>
+
+<form id="form-loja" class="cartao cut" novalidate>
+<h2>Contato e endereço</h2>
+<div class="grade">
+<div class="campo"><label for="l-zap">WhatsApp da loja</label><input id="l-zap" type="tel" placeholder="5585999999999"><span class="ajuda">Só números, com 55 e DDD. É para onde vai o botão de reservas.</span></div>
+<div class="campo"><label for="l-insta">Instagram</label><input id="l-insta" type="text" placeholder="boomgames_ofc"></div>
+<div class="campo"><label for="l-discord">Link do Discord (opcional)</label><input id="l-discord" type="url"></div>
+<div class="campo"><label for="l-maps">Link do Google Maps (opcional)</label><input id="l-maps" type="url"></div>
+</div>
+<div class="grade">
+<div class="campo"><label for="l-end">Endereço</label><input id="l-end" type="text"></div>
+<div class="campo"><label for="l-ref">Ponto de referência</label><input id="l-ref" type="text"></div>
+</div>
+<label class="check"><input type="checkbox" id="l-marcas"><span>Mostrar a seção de marcas parceiras no site</span></label>
+<div class="linha entre"><span id="msg-loja" class="ok" role="status"></span><button type="submit" class="btn">Salvar dados da loja</button></div>
+</form>
+
+<section class="cartao cut" aria-labelledby="tm">
+<div class="linha entre"><h2 id="tm">Marcas parceiras</h2><button type="button" class="btn sec" id="add-marca">+ Adicionar marca</button></div>
+<p class="ajuda">Envie o logo em PNG transparente ou SVG, de preferência na versão branca. A ordem da lista é a ordem no site.</p>
+<ul class="lista" id="marcas"></ul>
+<span id="msg-marcas" class="ok" role="status"></span>
+</section>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(async function () {
+  var $ = BOOM.$, db = BOOM.db;
+  document.querySelectorAll('[data-sair]').forEach(function (b) { b.addEventListener('click', function () { BOOM.sair('admin/'); }); });
+  document.querySelectorAll('[data-provedor]').forEach(function (b) { b.addEventListener('click', function () { BOOM.login(b.dataset.provedor, 'admin/'); }); });
+
+  var s = await BOOM.sessao();
+  if (!s) { BOOM.mostrar('login'); return; }
+  var p = await db.from('perfis').select('papel, bloqueado').eq('id', s.user.id).maybeSingle();
+  if (!p.data || p.data.papel !== 'admin' || p.data.bloqueado) { $('negado-email').textContent = 'Conta usada: ' + (s.user.email || ''); BOOM.mostrar('negado'); return; }
+
+  var aal = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal.data && aal.data.currentLevel === 'aal2') return abrirPainel();
+  var fs = await db.auth.mfa.listFactors();
+  var totp = (fs.data && fs.data.totp || []).filter(function (f) { return f.status === 'verified'; })[0];
+  if (totp) {
+    BOOM.mostrar('mfa');
+    $('verificar').addEventListener('click', async function () {
+      var r = await db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: $('cod').value.trim() });
+      if (r.error) { $('msg-mfa').textContent = 'Código inválido ou expirado. Tente o código atual do aplicativo.'; $('msg-mfa').hidden = false; return; }
+      abrirPainel();
+    });
+    $('cod').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('verificar').click(); });
+  } else {
+    var pend = (fs.data && fs.data.all || []).filter(function (f) { return f.factor_type === 'totp' && f.status !== 'verified'; });
+    for (var i = 0; i < pend.length; i++) await db.auth.mfa.unenroll({ factorId: pend[i].id });
+    var en = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Painel Boom Games' });
+    if (en.error) { alert('Não foi possível iniciar a verificação: ' + en.error.message); return; }
+    $('qr').src = en.data.totp.qr_code; $('segredo').textContent = en.data.totp.secret;
+    BOOM.mostrar('mfa-novo');
+    $('ativar').addEventListener('click', async function () {
+      var r = await db.auth.mfa.challengeAndVerify({ factorId: en.data.id, code: $('cod-novo').value.trim() });
+      if (r.error) { $('msg-novo').textContent = 'Código inválido. Confira se o relógio do celular está certo e use o código atual.'; $('msg-novo').hidden = false; return; }
+      abrirPainel();
+    });
+  }
+
+  async function abrirPainel() {
+    BOOM.mostrar('painel');
+    var r = await db.from('loja_config').select('*').eq('id', 1).maybeSingle();
+    var c = r.data || {};
+    $('l-zap').value = c.whatsapp || ''; $('l-insta').value = c.instagram || ''; $('l-discord').value = c.discord || '';
+    $('l-maps').value = c.maps_url || ''; $('l-end').value = c.endereco || ''; $('l-ref').value = c.referencia || '';
+    $('l-marcas').checked = c.mostrar_marcas !== false;
+    $('form-loja').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var dados = { whatsapp: $('l-zap').value.replace(/\D/g, '') || null, instagram: $('l-insta').value.replace(/^@/, '').trim() || null,
+        discord: $('l-discord').value.trim() || null, maps_url: $('l-maps').value.trim() || null, endereco: $('l-end').value.trim() || null,
+        referencia: $('l-ref').value.trim() || null, mostrar_marcas: $('l-marcas').checked };
+      var u = await db.from('loja_config').update(dados).eq('id', 1).select();
+      var m = $('msg-loja');
+      if (u.error || !u.data || !u.data.length) { m.className = 'erro'; m.textContent = 'Não foi possível salvar' + (u.error ? ': ' + u.error.message : '.'); return; }
+      m.className = 'ok'; m.textContent = '✓ Salvo. O site já mostra os dados novos.';
+    });
+    carregarMarcas();
+  }
+
+  var marcas = [];
+  async function carregarMarcas() {
+    var r = await db.from('marcas').select('*').order('ordem');
+    marcas = r.data || []; desenharMarcas();
+  }
+  function aviso(t, erro) { var m = $('msg-marcas'); m.className = erro ? 'erro' : 'ok'; m.textContent = t; }
+  function desenharMarcas() {
+    var ul = $('marcas'); ul.innerHTML = '';
+    marcas.forEach(function (m, i) {
+      var li = document.createElement('li');
+      var pos = document.createElement('span'); pos.textContent = i + 1; pos.style.cssText = "font-family:'Chakra Petch',sans-serif;color:#A6A6AE;text-align:center";
+      var slot = document.createElement('label'); slot.className = 'logo-slot'; slot.title = 'Enviar logo';
+      if (m.logo_url) { var img = document.createElement('img'); img.src = m.logo_url; img.alt = ''; slot.appendChild(img); } else slot.textContent = 'ENVIAR LOGO';
+      var file = document.createElement('input'); file.type = 'file'; file.accept = 'image/png,image/svg+xml,image/webp'; file.className = 'sr';
+      file.id = 'logo-' + m.id; slot.htmlFor = file.id;
+      file.addEventListener('change', async function () {
+        var f = file.files[0]; if (!f) return;
+        if (f.size > 1024 * 1024) return aviso('O logo precisa ter menos de 1 MB.', true);
+        var caminho = 'marcas/' + Date.now() + '-' + f.name.replace(/[^\w.\-]/g, '_');
+        var up = await db.storage.from('imagens').upload(caminho, f, { upsert: false, contentType: f.type });
+        if (up.error) return aviso('Erro ao enviar o logo: ' + up.error.message, true);
+        var pub = db.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
+        var u = await db.from('marcas').update({ logo_url: pub }).eq('id', m.id);
+        if (u.error) return aviso('Erro ao salvar o logo: ' + u.error.message, true);
+        m.logo_url = pub; desenharMarcas(); aviso('✓ Logo de ' + m.nome + ' atualizado.');
+      });
+      var nome = document.createElement('input'); nome.type = 'text'; nome.value = m.nome; nome.setAttribute('aria-label', 'Nome da marca ' + (i + 1));
+      nome.addEventListener('change', async function () {
+        var v = nome.value.trim(); if (!v) { nome.value = m.nome; return; }
+        var u = await db.from('marcas').update({ nome: v }).eq('id', m.id);
+        if (u.error) return aviso('Erro: ' + u.error.message, true); m.nome = v; aviso('✓ Nome salvo.');
+      });
+      var acoes = document.createElement('div'); acoes.className = 'linha acoes'; acoes.style.gap = '4px';
+      function bt(txt, rotulo, fn, off) { var b = document.createElement('button'); b.type = 'button'; b.className = 'mini'; b.textContent = txt; b.setAttribute('aria-label', rotulo); b.disabled = !!off; b.addEventListener('click', fn); acoes.appendChild(b); }
+      bt('↑', 'Subir ' + m.nome, function () { trocar(i, i - 1); }, i === 0);
+      bt('↓', 'Descer ' + m.nome, function () { trocar(i, i + 1); }, i === marcas.length - 1);
+      bt('✕', 'Remover ' + m.nome, async function () {
+        if (!confirm('Remover ' + m.nome + ' das marcas parceiras?')) return;
+        var d = await db.from('marcas').delete().eq('id', m.id);
+        if (d.error) return aviso('Erro: ' + d.error.message, true); marcas.splice(i, 1); desenharMarcas(); aviso('✓ Marca removida.');
+      });
+      li.append(pos, slot, file, nome, acoes); ul.appendChild(li);
+    });
+  }
+  async function trocar(a, b) {
+    var t = marcas[a]; marcas[a] = marcas[b]; marcas[b] = t;
+    desenharMarcas();
+    var r = await Promise.all(marcas.map(function (m, i) { return db.from('marcas').update({ ordem: i + 1 }).eq('id', m.id); }));
+    if (r.some(function (x) { return x.error; })) aviso('Erro ao salvar a ordem.', true); else aviso('✓ Ordem salva.');
+  }
+  $('add-marca').addEventListener('click', async function () {
+    var nome = prompt('Nome da nova marca:'); if (!nome || !nome.trim()) return;
+    var r = await db.from('marcas').insert({ nome: nome.trim(), ordem: marcas.length + 1 }).select().single();
+    if (r.error) return aviso('Erro: ' + r.error.message, true);
+    marcas.push(r.data); desenharMarcas(); aviso('✓ ' + r.data.nome + ' adicionada. Agora envie o logo.');
+  });
+})();
+</script>
+</body>
+</html>
