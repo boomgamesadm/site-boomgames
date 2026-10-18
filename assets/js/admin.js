@@ -49,10 +49,20 @@
     $('lista-camp').innerHTML = camps.length ? '<table class="tabela"><thead><tr><th>CAMPEONATO</th><th>DATA</th><th>VAGAS</th><th>SITUAÇÃO</th><th><span class="sr">Ações</span></th></tr></thead><tbody>' +
       camps.map(function (c) { return '<tr><td><b>' + C.esc(c.nome) + '</b>' + (c.edicao ? '<br><small class="ajuda">' + C.esc(c.edicao) + '</small>' : '') + '</td><td>' + C.data(c.data_evento) + '</td><td>' + vag[c.id] + ' / ' + c.vagas + '</td><td>' + C.selo(C.STATUS, c.status) + '</td>' +
         '<td style="white-space:nowrap;text-align:right"><button type="button" class="btn sec" style="min-height:38px" data-editar="' + c.id + '">Editar</button> <button type="button" class="btn sec" style="min-height:38px" data-insc="' + c.id + '">Inscrições</button> ' +
-        (c.status !== 'rascunho' ? '<a class="btn sec" style="min-height:38px" href="../campeonatos/ver/?c=' + encodeURIComponent(c.slug) + '" target="_blank">Ver ↗</a>' : '') + '</td></tr>'; }).join('') + '</tbody></table>'
+        (c.status !== 'rascunho' ? '<a class="btn sec" style="min-height:38px" href="../campeonatos/ver/?c=' + encodeURIComponent(c.slug) + '" target="_blank">Ver ↗</a> ' : '') + '<button type="button" class="btn sec" style="min-height:38px;border-color:#8E8E96" data-excluir="' + c.id + '" aria-label="Excluir ' + C.esc(c.nome) + '">Excluir</button></td></tr>'; }).join('') + '</tbody></table>'
       : '<div class="vazio">Nenhum campeonato ainda. Clique em "+ Novo campeonato".</div>';
     $('lista-camp').querySelectorAll('[data-editar]').forEach(function (b) { b.onclick = function () { abrirForm(camps.filter(function (c) { return c.id == b.dataset.editar; })[0]); }; });
     $('lista-camp').querySelectorAll('[data-insc]').forEach(function (b) { b.onclick = function () { $('insc-camp').dataset.sel = b.dataset.insc; aba('inscricoes'); }; });
+    $('lista-camp').querySelectorAll('[data-excluir]').forEach(function (b) { b.onclick = async function () {
+      var c = camps.filter(function (k) { return String(k.id) === b.dataset.excluir; })[0];
+      var t = prompt('ATENÇÃO: isso apaga o campeonato "' + c.nome + (c.edicao ? ' · ' + c.edicao : '') + '" com todas as inscrições, pagamentos, partidas e resultados. Não dá para desfazer.\n\nPara confirmar, digite EXCLUIR:');
+      if (!t || t.trim().toUpperCase() !== 'EXCLUIR') return;
+      b.disabled = true;
+      var r = await db.from('campeonatos').delete().eq('id', c.id);
+      if (r.error) { alert('Não foi possível excluir: ' + r.error.message); b.disabled = false; return; }
+      if (editando && editando.id === c.id) { editando = null; $('form-camp').hidden = true; }
+      carregarCamps();
+    }; });
   }
   function local(dt) { if (!dt) return ''; var d = new Date(dt); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); }
   function prevNome() { $('c-nome-prev').textContent = 'Copa Boom ' + ($('c-jogo').value.trim() || '…') + ($('c-edicao').value.trim() ? ' · ' + $('c-edicao').value.trim() : ''); }
