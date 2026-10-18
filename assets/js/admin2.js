@@ -221,52 +221,49 @@ window.ADMIN2 = (function () {
     $('ar-gerar').onclick = gerarArte;
   }
   async function gerarArte() {
-    try { await document.fonts.load('700 80px "Chakra Petch"'); await document.fonts.load('800 30px Manrope'); } catch (e) {}
-    var cv = $('ar-canvas'), modelo = $('ar-modelo').value, story = modelo === 'agenda';
-    cv.width = 1080; cv.height = story ? 1920 : 1080;
-    var x = cv.getContext('2d'), W = cv.width, H = cv.height, L = '#FF7A1A';
-    var c = camps.filter(function (k) { return String(k.id) === $('ar-camp').value; })[0];
-    if (!c) return alert('Escolha um campeonato.');
-    x.fillStyle = '#0A0A0B'; x.fillRect(0, 0, W, H);
-    var g = x.createRadialGradient(W * .75, H * .2, 10, W * .75, H * .2, W * .8); g.addColorStop(0, 'rgba(255,122,26,.35)'); g.addColorStop(1, 'rgba(255,122,26,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-    x.strokeStyle = 'rgba(255,255,255,.05)'; x.lineWidth = 1; for (var i = 0; i < W; i += 48) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, H); x.stroke(); } for (i = 0; i < H; i += 48) { x.beginPath(); x.moveTo(0, i); x.lineTo(W, i); x.stroke(); }
-    if (logo.complete && logo.naturalWidth) { var lw = 300, lh = lw * logo.naturalHeight / logo.naturalWidth; x.drawImage(logo, 60, 60, lw, lh); }
-    function txt(t, px, y, cor, peso, alinh, fonte) { x.fillStyle = cor || '#fff'; x.font = (peso || '700') + ' ' + px + 'px ' + (fonte || '"Chakra Petch", sans-serif'); x.textAlign = alinh || 'center'; x.fillText(t, alinh === 'left' ? 80 : W / 2, y); }
-    function faixa(y, h) { x.fillStyle = L; x.beginPath(); x.moveTo(0, y + h * .25); x.lineTo(W, y); x.lineTo(W, y + h); x.lineTo(0, y + h); x.closePath(); x.fill(); }
-    if (modelo === 'inscricoes') {
-      txt('COPA BOOM', 40, H * .36, L, '800', 'center', 'Manrope, sans-serif');
-      txt(c.jogo.toUpperCase(), 150, H * .5); if (c.edicao) txt(c.edicao.toUpperCase(), 40, H * .57, '#C4C4CA', '700');
-      x.fillStyle = '#fff'; x.fillRect(W / 2 - 300, H * .62, 600, 80); txt('INSCRIÇÕES ABERTAS', 44, H * .62 + 56, '#0A0A0B');
-      faixa(H * .8, H * .2); txt((c.data_evento ? C.data(c.data_evento) + '  ·  ' : '') + c.vagas + ' VAGAS', 50, H * .93, '#0A0A0B');
-    } else if (modelo === 'resultado') {
-      var d = $('ar-partida')._dados || {}, p = (d.ps || []).filter(function (k) { return String(k.id) === $('ar-partida').value; })[0];
-      if (!p) return alert('Escolha uma partida com resultado publicado.');
-      var A = d.E[p.equipe_a], B = d.E[p.equipe_b];
-      txt('RESULTADO · ' + (C.FASES[p.fase] || p.fase).toUpperCase(), 36, H * .3, L, '800', 'center', 'Manrope, sans-serif');
-      x.textAlign = 'center'; x.font = '700 110px "Chakra Petch", sans-serif'; x.fillStyle = p.vencedor_id === A.id ? '#fff' : '#8E8E96'; x.fillText(A.sigla, W * .22, H * .52); x.fillStyle = p.vencedor_id === B.id ? '#fff' : '#8E8E96'; x.fillText(B.sigla, W * .78, H * .52);
-      x.fillStyle = '#0A0A0B'; x.fillRect(W * .32, H * .38, W * .36, H * .2);
-      x.fillStyle = L; x.font = '700 150px "Chakra Petch", sans-serif'; x.fillText(p.placar_a + ':' + p.placar_b, W / 2, H * .54);
-      var vn = p.vencedor_id ? d.E[p.vencedor_id].nome : 'Empate'; txt(p.vencedor_id ? vn.toUpperCase() + ' VENCE!' : 'EMPATE', 54, H * .68);
-      faixa(H * .82, H * .18); txt(c.nome.toUpperCase(), 50, H * .94, '#0A0A0B');
-    } else if (modelo === 'campeao') {
-      if (!c.campeao_id) return alert('Este campeonato ainda não tem campeã.');
-      var e = (await db.from('equipes').select('nome, sigla').eq('id', c.campeao_id).single()).data;
-      var g2 = x.createRadialGradient(W / 2, H * .5, 10, W / 2, H * .5, W * .6); g2.addColorStop(0, 'rgba(255,122,26,.45)'); g2.addColorStop(1, 'rgba(255,122,26,0)'); x.fillStyle = g2; x.fillRect(0, 0, W, H);
-      txt('🏆', 140, H * .38); txt('CAMPEÕES', 46, H * .47, L, '800', 'center', 'Manrope, sans-serif');
-      txt(e.nome.toUpperCase(), e.nome.length > 14 ? 90 : 120, H * .6); faixa(H * .82, H * .18); txt(c.nome.toUpperCase(), 50, H * .94, '#0A0A0B');
-    } else {
-      var hoje = new Date(); hoje.setHours(0, 0, 0, 0); var am = new Date(hoje.getTime() + 864e5);
-      var ps = (await db.from('partidas').select('*').eq('campeonato_id', c.id).gte('inicio', hoje.toISOString()).lt('inicio', am.toISOString()).order('inicio')).data || [];
-      var ids = []; ps.forEach(function (p2) { ids.push(p2.equipe_a, p2.equipe_b); });
-      var E2 = {}; ((ids.filter(Boolean).length ? (await db.from('equipes').select('id, nome, sigla').in('id', ids.filter(Boolean))).data : []) || []).forEach(function (k) { E2[k.id] = k; });
-      txt('HOJE NA ARENA', 44, 420, L, '800', 'center', 'Manrope, sans-serif'); txt(c.nome.toUpperCase(), 76, 520);
-      if (!ps.length) txt('Sem partidas com horário hoje', 40, 700, '#C4C4CA', '600', 'center', 'Manrope, sans-serif');
-      ps.slice(0, 8).forEach(function (p2, k) { var y = 640 + k * 150; x.fillStyle = 'rgba(19,19,21,.95)'; x.fillRect(80, y, W - 160, 120); x.strokeStyle = '#2E2E34'; x.strokeRect(80, y, W - 160, 120);
-        x.textAlign = 'left'; x.fillStyle = L; x.font = '700 46px "Chakra Petch", sans-serif'; x.fillText(new Date(p2.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), 110, y + 76);
-        x.fillStyle = '#fff'; x.font = '800 38px Manrope, sans-serif'; x.fillText(((E2[p2.equipe_a] || {}).nome || p2.rotulo_a || '?') + ' x ' + ((E2[p2.equipe_b] || {}).nome || p2.rotulo_b || '?'), 300, y + 74); });
-      faixa(H - 300, 300); txt('ACOMPANHE NO SITE', 54, H - 110, '#0A0A0B');
-    }
-    cv.toBlob(function (b) { var a = $('ar-baixar'); if (a.href) URL.revokeObjectURL(a.href); a.href = URL.createObjectURL(b); a.download = 'boom-games-' + modelo + '.png'; a.hidden = false; }, 'image/png');
+    var btn = $('ar-gerar'); btn.disabled = true; btn.textContent = 'Gerando…';
+    try {
+      try { await Promise.all([document.fonts.load('italic 700 120px "Chakra Petch"'), document.fonts.load('700 80px "Chakra Petch"'), document.fonts.load('800 30px Manrope')]); } catch (e) {}
+      if (!logo.complete) await new Promise(function (ok) { logo.onload = ok; logo.onerror = ok; });
+      var modelo = $('ar-modelo').value, c = camps.filter(function (k) { return String(k.id) === $('ar-camp').value; })[0];
+      if (!c) throw new Error('Escolha um campeonato.');
+      var d = { logo: logo, site: BOOM.url('').replace(/^https?:\/\//, '').replace(/\/$/, ''), campeonato: c.nome, edicao: c.edicao };
+      if (modelo === 'campeao') {
+        if (!c.campeao_id) throw new Error('Este campeonato ainda não tem campeã. Publique o resultado da final.');
+        var e = (await db.from('equipes').select('nome, sigla').eq('id', c.campeao_id).single()).data;
+        var fin = (await db.from('partidas').select('*').eq('campeonato_id', c.id).eq('fase', 'final').maybeSingle()).data;
+        var mem = (await db.from('equipe_membros').select('jogador_id').eq('equipe_id', c.campeao_id).eq('status', 'aceito')).data || [];
+        var nk = mem.length ? ((await db.from('jogadores_publicos').select('nick').in('id', mem.map(function (m) { return m.jogador_id; }))).data || []) : [];
+        d.equipe = e.nome; d.sigla = e.sigla; d.elenco = nk.map(function (x) { return x.nick; });
+        if (fin && fin.placar_a != null) {
+          var aVenceu = fin.vencedor_id === fin.equipe_a, viceId = aVenceu ? fin.equipe_b : fin.equipe_a;
+          var vice = viceId ? (await db.from('equipes').select('nome').eq('id', viceId).single()).data : null;
+          d.placar = aVenceu ? fin.placar_a + ' x ' + fin.placar_b : fin.placar_b + ' x ' + fin.placar_a; d.vice = vice ? vice.nome : '';
+        }
+      } else if (modelo === 'resultado') {
+        var dd = $('ar-partida')._dados || {}, p = (dd.ps || []).filter(function (k) { return String(k.id) === $('ar-partida').value; })[0];
+        if (!p) throw new Error('Escolha uma partida com resultado publicado.');
+        var A = dd.E[p.equipe_a], B = dd.E[p.equipe_b];
+        d.fase = C.FASES[p.fase] || p.fase; d.serie = p.serie; d.siglaA = A.sigla; d.siglaB = B.sigla; d.equipeA = A.nome; d.equipeB = B.nome;
+        d.placarA = p.placar_a; d.placarB = p.placar_b; d.vencedor = p.vencedor_id === A.id ? 'a' : p.vencedor_id === B.id ? 'b' : null;
+        d.mapas = (await db.from('mapas').select('*').eq('partida_id', p.id).order('numero')).data || [];
+      } else if (modelo === 'inscricoes') {
+        d.jogo = c.jogo; d.data = c.data_evento ? C.data(c.data_evento) : null; d.vagas = c.vagas; d.elenco = c.tamanho_elenco;
+        d.valor = Number(c.valor_inscricao) > 0 ? C.dinheiro(c.valor_inscricao) : 'GRATUITA'; d.premio = c.premio_1;
+      } else {
+        var hoje = new Date(); hoje.setHours(0, 0, 0, 0); var am = new Date(hoje.getTime() + 864e5);
+        var ps = (await db.from('partidas').select('*').eq('campeonato_id', c.id).gte('inicio', hoje.toISOString()).lt('inicio', am.toISOString()).order('inicio')).data || [];
+        var ids = []; ps.forEach(function (q) { if (q.equipe_a) ids.push(q.equipe_a); if (q.equipe_b) ids.push(q.equipe_b); });
+        var E2 = {}; ((ids.length ? (await db.from('equipes').select('id, nome').in('id', ids)).data : []) || []).forEach(function (k) { E2[k.id] = k; });
+        d.dia = hoje.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace('.', '').toUpperCase();
+        d.aoVivo = c.transmissao_url ? (c.transmissao_plataforma || 'transmissão') : null;
+        d.jogos = ps.map(function (q) { return { hora: new Date(q.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), fase: (C.FASES[q.fase] || q.fase) + (q.codigo ? ' · ' + q.codigo : ''), a: (E2[q.equipe_a] || {}).nome || q.rotulo_a || 'A definir', b: (E2[q.equipe_b] || {}).nome || q.rotulo_b || 'A definir', aoVivo: q.status === 'em_andamento' }; });
+      }
+      var cv = $('ar-canvas'); ARTES.desenhar(cv, modelo, d);
+      cv.style.width = modelo === 'agenda' ? 'min(100%, 300px)' : 'min(100%, 460px)';
+      cv.toBlob(function (bl) { var a = $('ar-baixar'); if (a.href && a.href.indexOf('blob:') === 0) URL.revokeObjectURL(a.href); a.href = URL.createObjectURL(bl); a.download = 'boom-games-' + modelo + '.png'; a.hidden = false; }, 'image/png');
+    } catch (err) { alert(err.message || err); }
+    btn.disabled = false; btn.textContent = 'Gerar arte';
   }
   // ================= HISTÓRICO E USO
   async function historico() {
