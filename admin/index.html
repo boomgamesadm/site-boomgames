@@ -50,27 +50,86 @@
 <button type="button" class="btn sec" data-sair>Sair</button>
 </section></div>
 
-<div data-tela="painel" hidden class="pilha" style="gap:24px">
-<div class="linha entre"><div class="pilha" style="gap:4px"><span class="olho">PAINEL ADMINISTRATIVO</span><h1>Dados da loja</h1></div>
+<div data-tela="painel" hidden class="pilha" style="gap:22px">
+<div class="linha entre"><div class="pilha" style="gap:4px"><span class="olho">PAINEL ADMINISTRATIVO</span><h1>Boom Games</h1></div>
 <div class="linha"><span class="selo lin">🔒 VERIFICADO</span><a class="btn sec" href="../">Ver site ↗</a><button type="button" class="btn sec" data-sair>Sair</button></div></div>
-<p class="ajuda">Nesta fase o painel já edita os dados da loja e as marcas parceiras. Campeonatos, inscrições e resultados chegam nas próximas fases.</p>
+<div class="abas" role="tablist" aria-label="Áreas do painel">
+<button type="button" role="tab" data-aba="campeonatos" aria-selected="true">Campeonatos</button>
+<button type="button" role="tab" data-aba="inscricoes" aria-selected="false">Inscrições</button>
+<button type="button" role="tab" data-aba="loja" aria-selected="false">Dados da loja</button>
+</div>
 
+<div data-painel="campeonatos" class="pilha" style="gap:18px">
+<div class="linha entre"><h2>Campeonatos</h2><button type="button" class="btn" id="novo-camp">+ Novo campeonato</button></div>
+<div id="lista-camp" class="rolar"></div>
+<form id="form-camp" class="cartao cut destaque" hidden novalidate>
+<div class="linha entre"><h2 id="form-camp-t">Novo campeonato</h2><button type="button" class="btn sec" id="fechar-camp">Fechar</button></div>
+<div class="grade">
+<div class="campo"><label for="c-jogo">Jogo</label><input id="c-jogo" list="jogos-lista" type="text" placeholder="ex.: Valorant"><datalist id="jogos-lista"><option>Valorant</option><option>CS2</option><option>EA FC</option><option>Fortnite</option><option>League of Legends</option><option>Rocket League</option><option>Simulador</option></datalist></div>
+<div class="campo"><label for="c-edicao">Edição (opcional)</label><input id="c-edicao" type="text" placeholder="ex.: 1ª edição"></div>
+<div class="campo"><label for="c-plat">Plataforma</label><select id="c-plat"><option>PC</option><option>Console</option><option>Cockpit</option><option>VR</option></select></div>
+<div class="campo"><label for="c-mod">Modalidade</label><select id="c-mod"><option>Equipes 5v5</option><option>Equipes 3v3</option><option>Duplas</option><option>Individual 1v1</option><option>Contra o relógio</option></select></div>
+</div>
+<div class="aviso">Nome no site: <strong id="c-nome-prev">Copa Boom</strong></div>
+<div class="grade">
+<div class="campo"><label for="c-formato">Formato</label><select id="c-formato"><option value="grupos_mata">Grupos + mata-mata</option><option value="eliminacao_simples">Eliminação simples</option><option value="eliminacao_dupla">Eliminação dupla</option><option value="pontos_corridos">Pontos corridos</option></select></div>
+<div class="campo"><label for="c-elenco">Jogadores titulares por equipe</label><input id="c-elenco" type="number" min="1" value="5"></div>
+<div class="campo"><label for="c-res">Reservas permitidos</label><input id="c-res" type="number" min="0" value="1"></div>
+<div class="campo"><label for="c-vagas">Vagas (equipes)</label><input id="c-vagas" type="number" min="2" value="16"></div>
+</div>
+<div class="grade">
+<div class="campo"><label for="c-valor">Valor da inscrição (R$)</label><input id="c-valor" type="number" min="0" step="0.01" value="0"></div>
+<div class="campo"><label for="c-data">Data do evento</label><input id="c-data" type="date"></div>
+<div class="campo"><label for="c-ini">Inscrições a partir de</label><input id="c-ini" type="datetime-local"></div>
+<div class="campo"><label for="c-fim">Inscrições até</label><input id="c-fim" type="datetime-local"></div>
+</div>
+<div class="grade">
+<div class="campo"><label for="c-p1">Prêmio 1º lugar</label><input id="c-p1" type="text"></div>
+<div class="campo"><label for="c-p2">Prêmio 2º lugar</label><input id="c-p2" type="text"></div>
+<div class="campo"><label for="c-p3">Prêmio 3º lugar</label><input id="c-p3" type="text"></div>
+</div>
+<div class="campo"><label for="c-reg">Regulamento</label><textarea id="c-reg" rows="6"></textarea></div>
+<div class="grade">
+<div class="campo"><label for="c-tp">Transmissão</label><select id="c-tp"><option value="">Sem transmissão</option><option>Twitch</option><option>Kick</option><option>YouTube</option></select></div>
+<div class="campo"><label for="c-tu">Link da transmissão</label><input id="c-tu" type="url"></div>
+<div class="campo"><label for="c-capa">Arte de capa (opcional)</label><input id="c-capa" type="file" accept="image/*" style="padding:12px;min-height:auto"></div>
+<div class="campo"><label for="c-status">Situação</label><select id="c-status"><option value="rascunho">Rascunho (não aparece no site)</option><option value="inscricoes_abertas">Inscrições abertas</option><option value="inscricoes_encerradas">Inscrições encerradas</option><option value="em_andamento">Em andamento</option><option value="finalizado">Finalizado</option></select></div>
+</div>
+<p class="erro" id="msg-camp" role="alert" hidden></p>
+<div class="linha entre"><span class="ok" id="ok-camp"></span><button type="submit" class="btn">Salvar campeonato</button></div>
+</form>
+</div>
+
+<div data-painel="inscricoes" hidden class="pilha" style="gap:18px">
+<div class="linha entre"><h2>Inscrições</h2><div class="campo" style="min-width:260px"><label for="insc-camp" class="sr">Campeonato</label><select id="insc-camp"></select></div></div>
+<div id="lista-insc" class="pilha" style="gap:12px"></div>
+</div>
+
+<div data-painel="loja" hidden class="pilha" style="gap:18px">
 <form id="form-loja" class="cartao cut" novalidate>
 <h2>Contato e endereço</h2>
 <div class="grade">
-<div class="campo"><label for="l-zap">WhatsApp da loja</label><input id="l-zap" type="tel" placeholder="5585999999999"><span class="ajuda">Só números, com 55 e DDD. É para onde vai o botão de reservas.</span></div>
+<div class="campo"><label for="l-zap">WhatsApp da loja</label><input id="l-zap" type="tel" placeholder="5585999999999"><span class="ajuda">Só números, com 55 e DDD.</span></div>
 <div class="campo"><label for="l-insta">Instagram</label><input id="l-insta" type="text" placeholder="boomgames_ofc"></div>
 <div class="campo"><label for="l-discord">Link do Discord (opcional)</label><input id="l-discord" type="url"></div>
-<div class="campo"><label for="l-maps">Link do Google Maps (opcional)</label><input id="l-maps" type="url"></div>
+<div class="campo"><label for="l-maps">Link do Google Maps</label><input id="l-maps" type="url"></div>
 </div>
 <div class="grade">
 <div class="campo"><label for="l-end">Endereço</label><input id="l-end" type="text"></div>
 <div class="campo"><label for="l-ref">Ponto de referência</label><input id="l-ref" type="text"></div>
 </div>
 <label class="check"><input type="checkbox" id="l-marcas"><span>Mostrar a seção de marcas parceiras no site</span></label>
+<h2 style="margin-top:12px">Pix das inscrições</h2>
+<p class="ajuda">Enquanto a chave ficar vazia, o site pede para o jogador combinar o pagamento pelo WhatsApp ou na loja.</p>
+<div class="grade">
+<div class="campo"><label for="l-pt">Tipo de chave</label><select id="l-pt"><option value="cnpj">CNPJ</option><option value="cpf">CPF</option><option value="email">E-mail</option><option value="telefone">Telefone</option><option value="aleatoria">Chave aleatória</option></select></div>
+<div class="campo"><label for="l-pc">Chave Pix</label><input id="l-pc" type="text"></div>
+<div class="campo"><label for="l-pn">Nome do recebedor (como no banco)</label><input id="l-pn" type="text" placeholder="BOOM GAMES"></div>
+<div class="campo"><label for="l-pci">Cidade</label><input id="l-pci" type="text" value="Fortaleza"></div>
+<div class="campo"><label for="l-rm">Reserva da vaga para pagar (minutos)</label><input id="l-rm" type="number" min="5" value="30"></div>
+</div>
 <div class="linha entre"><span id="msg-loja" class="ok" role="status"></span><button type="submit" class="btn">Salvar dados da loja</button></div>
 </form>
-
 <section class="cartao cut" aria-labelledby="tm">
 <div class="linha entre"><h2 id="tm">Marcas parceiras</h2><button type="button" class="btn sec" id="add-marca">+ Adicionar marca</button></div>
 <p class="ajuda">Envie o logo em PNG transparente ou SVG, de preferência na versão branca. A ordem da lista é a ordem no site.</p>
@@ -78,124 +137,12 @@
 <span id="msg-marcas" class="ok" role="status"></span>
 </section>
 </div>
+</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/config.js"></script>
 <script src="../assets/js/app.js"></script>
-<script>
-(async function () {
-  var $ = BOOM.$, db = BOOM.db;
-  document.querySelectorAll('[data-sair]').forEach(function (b) { b.addEventListener('click', function () { BOOM.sair('admin/'); }); });
-  document.querySelectorAll('[data-provedor]').forEach(function (b) { b.addEventListener('click', function () { BOOM.login(b.dataset.provedor, 'admin/'); }); });
-
-  var s = await BOOM.sessao();
-  if (!s) { BOOM.mostrar('login'); return; }
-  var p = await db.from('perfis').select('papel, bloqueado').eq('id', s.user.id).maybeSingle();
-  if (!p.data || p.data.papel !== 'admin' || p.data.bloqueado) { $('negado-email').textContent = 'Conta usada: ' + (s.user.email || ''); BOOM.mostrar('negado'); return; }
-
-  var aal = await db.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (aal.data && aal.data.currentLevel === 'aal2') return abrirPainel();
-  var fs = await db.auth.mfa.listFactors();
-  var totp = (fs.data && fs.data.totp || []).filter(function (f) { return f.status === 'verified'; })[0];
-  if (totp) {
-    BOOM.mostrar('mfa');
-    $('verificar').addEventListener('click', async function () {
-      var r = await db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: $('cod').value.trim() });
-      if (r.error) { $('msg-mfa').textContent = 'Código inválido ou expirado. Tente o código atual do aplicativo.'; $('msg-mfa').hidden = false; return; }
-      abrirPainel();
-    });
-    $('cod').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('verificar').click(); });
-  } else {
-    var pend = (fs.data && fs.data.all || []).filter(function (f) { return f.factor_type === 'totp' && f.status !== 'verified'; });
-    for (var i = 0; i < pend.length; i++) await db.auth.mfa.unenroll({ factorId: pend[i].id });
-    var en = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Painel Boom Games' });
-    if (en.error) { alert('Não foi possível iniciar a verificação: ' + en.error.message); return; }
-    $('qr').src = en.data.totp.qr_code; $('segredo').textContent = en.data.totp.secret;
-    BOOM.mostrar('mfa-novo');
-    $('ativar').addEventListener('click', async function () {
-      var r = await db.auth.mfa.challengeAndVerify({ factorId: en.data.id, code: $('cod-novo').value.trim() });
-      if (r.error) { $('msg-novo').textContent = 'Código inválido. Confira se o relógio do celular está certo e use o código atual.'; $('msg-novo').hidden = false; return; }
-      abrirPainel();
-    });
-  }
-
-  async function abrirPainel() {
-    BOOM.mostrar('painel');
-    var r = await db.from('loja_config').select('*').eq('id', 1).maybeSingle();
-    var c = r.data || {};
-    $('l-zap').value = c.whatsapp || ''; $('l-insta').value = c.instagram || ''; $('l-discord').value = c.discord || '';
-    $('l-maps').value = c.maps_url || ''; $('l-end').value = c.endereco || ''; $('l-ref').value = c.referencia || '';
-    $('l-marcas').checked = c.mostrar_marcas !== false;
-    $('form-loja').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var dados = { whatsapp: $('l-zap').value.replace(/\D/g, '') || null, instagram: $('l-insta').value.replace(/^@/, '').trim() || null,
-        discord: $('l-discord').value.trim() || null, maps_url: $('l-maps').value.trim() || null, endereco: $('l-end').value.trim() || null,
-        referencia: $('l-ref').value.trim() || null, mostrar_marcas: $('l-marcas').checked };
-      var u = await db.from('loja_config').update(dados).eq('id', 1).select();
-      var m = $('msg-loja');
-      if (u.error || !u.data || !u.data.length) { m.className = 'erro'; m.textContent = 'Não foi possível salvar' + (u.error ? ': ' + u.error.message : '.'); return; }
-      m.className = 'ok'; m.textContent = '✓ Salvo. O site já mostra os dados novos.';
-    });
-    carregarMarcas();
-  }
-
-  var marcas = [];
-  async function carregarMarcas() {
-    var r = await db.from('marcas').select('*').order('ordem');
-    marcas = r.data || []; desenharMarcas();
-  }
-  function aviso(t, erro) { var m = $('msg-marcas'); m.className = erro ? 'erro' : 'ok'; m.textContent = t; }
-  function desenharMarcas() {
-    var ul = $('marcas'); ul.innerHTML = '';
-    marcas.forEach(function (m, i) {
-      var li = document.createElement('li');
-      var pos = document.createElement('span'); pos.textContent = i + 1; pos.style.cssText = "font-family:'Chakra Petch',sans-serif;color:#A6A6AE;text-align:center";
-      var slot = document.createElement('label'); slot.className = 'logo-slot'; slot.title = 'Enviar logo';
-      if (m.logo_url) { var img = document.createElement('img'); img.src = m.logo_url; img.alt = ''; slot.appendChild(img); } else slot.textContent = 'ENVIAR LOGO';
-      var file = document.createElement('input'); file.type = 'file'; file.accept = 'image/png,image/svg+xml,image/webp'; file.className = 'sr';
-      file.id = 'logo-' + m.id; slot.htmlFor = file.id;
-      file.addEventListener('change', async function () {
-        var f = file.files[0]; if (!f) return;
-        if (f.size > 1024 * 1024) return aviso('O logo precisa ter menos de 1 MB.', true);
-        var caminho = 'marcas/' + Date.now() + '-' + f.name.replace(/[^\w.\-]/g, '_');
-        var up = await db.storage.from('imagens').upload(caminho, f, { upsert: false, contentType: f.type });
-        if (up.error) return aviso('Erro ao enviar o logo: ' + up.error.message, true);
-        var pub = db.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
-        var u = await db.from('marcas').update({ logo_url: pub }).eq('id', m.id);
-        if (u.error) return aviso('Erro ao salvar o logo: ' + u.error.message, true);
-        m.logo_url = pub; desenharMarcas(); aviso('✓ Logo de ' + m.nome + ' atualizado.');
-      });
-      var nome = document.createElement('input'); nome.type = 'text'; nome.value = m.nome; nome.setAttribute('aria-label', 'Nome da marca ' + (i + 1));
-      nome.addEventListener('change', async function () {
-        var v = nome.value.trim(); if (!v) { nome.value = m.nome; return; }
-        var u = await db.from('marcas').update({ nome: v }).eq('id', m.id);
-        if (u.error) return aviso('Erro: ' + u.error.message, true); m.nome = v; aviso('✓ Nome salvo.');
-      });
-      var acoes = document.createElement('div'); acoes.className = 'linha acoes'; acoes.style.gap = '4px';
-      function bt(txt, rotulo, fn, off) { var b = document.createElement('button'); b.type = 'button'; b.className = 'mini'; b.textContent = txt; b.setAttribute('aria-label', rotulo); b.disabled = !!off; b.addEventListener('click', fn); acoes.appendChild(b); }
-      bt('↑', 'Subir ' + m.nome, function () { trocar(i, i - 1); }, i === 0);
-      bt('↓', 'Descer ' + m.nome, function () { trocar(i, i + 1); }, i === marcas.length - 1);
-      bt('✕', 'Remover ' + m.nome, async function () {
-        if (!confirm('Remover ' + m.nome + ' das marcas parceiras?')) return;
-        var d = await db.from('marcas').delete().eq('id', m.id);
-        if (d.error) return aviso('Erro: ' + d.error.message, true); marcas.splice(i, 1); desenharMarcas(); aviso('✓ Marca removida.');
-      });
-      li.append(pos, slot, file, nome, acoes); ul.appendChild(li);
-    });
-  }
-  async function trocar(a, b) {
-    var t = marcas[a]; marcas[a] = marcas[b]; marcas[b] = t;
-    desenharMarcas();
-    var r = await Promise.all(marcas.map(function (m, i) { return db.from('marcas').update({ ordem: i + 1 }).eq('id', m.id); }));
-    if (r.some(function (x) { return x.error; })) aviso('Erro ao salvar a ordem.', true); else aviso('✓ Ordem salva.');
-  }
-  $('add-marca').addEventListener('click', async function () {
-    var nome = prompt('Nome da nova marca:'); if (!nome || !nome.trim()) return;
-    var r = await db.from('marcas').insert({ nome: nome.trim(), ordem: marcas.length + 1 }).select().single();
-    if (r.error) return aviso('Erro: ' + r.error.message, true);
-    marcas.push(r.data); desenharMarcas(); aviso('✓ ' + r.data.nome + ' adicionada. Agora envie o logo.');
-  });
-})();
-</script>
+<script src="../assets/js/camp.js"></script>
+<script src="../assets/js/admin.js"></script>
 </body>
 </html>

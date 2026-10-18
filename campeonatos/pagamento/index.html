@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagamento da inscrição · Boom Games</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/img/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="../../assets/img/favicon-48.png?v=2">
+<link rel="icon" type="image/svg+xml" href="../../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../../assets/img/icone-180.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
+<main>
+<div id="conteudo" class="pilha" style="gap:24px;max-width:960px;margin:0 auto"><div class="carregando">Carregando inscrição…</div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/camp.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP, $ = BOOM.$, alvo = $('conteudo');
+  var s = await BOOM.sessao();
+  if (!s) { location.replace(BOOM.url('entrar/')); return; }
+  var id = C.param('i'), timer = null;
+  async function carregar() {
+    var i = (await db.from('inscricoes').select('*').eq('id', id || 0).maybeSingle()).data;
+    if (!i) { alvo.innerHTML = '<div class="vazio">Inscrição não encontrada. <a href="../../conta/">Ir para Minha conta</a></div>'; return; }
+    var c = (await db.from('campeonatos').select('*').eq('id', i.campeonato_id).single()).data;
+    var e = (await db.from('equipes').select('*').eq('id', i.equipe_id).single()).data;
+    var loja = (await db.from('loja_config').select('whatsapp, pix_tipo, pix_chave, pix_nome, pix_cidade').eq('id', 1).maybeSingle()).data || {};
+    var capitao = e.capitao_id === s.user.id;
+    desenhar(i, c, e, loja, capitao);
+  }
+  function cab(i, c, e) {
+    return '<div class="pilha" style="gap:6px"><a class="ajuda" href="../ver/?c=' + encodeURIComponent(c.slug) + '">← ' + C.esc(c.nome) + '</a><span class="olho">INSCRIÇÃO ' + C.esc(i.codigo) + '</span><h1>' + C.esc(e.nome) + '</h1><div class="linha">' + C.selo(C.INSC, C.statusInsc(i)) + '<span class="sub">' + C.esc(c.nome) + ' · ' + (Number(c.valor_inscricao) > 0 ? C.dinheiro(c.valor_inscricao) : 'gratuita') + '</span></div></div>';
+  }
+  function bloco(t, txt, extra) { return '<section class="cartao cut destaque"><h2>' + t + '</h2><p class="sub">' + txt + '</p>' + (extra || '') + '</section>'; }
+  function desenhar(i, c, e, loja, capitao) {
+    clearInterval(timer);
+    var st = C.statusInsc(i), h = cab(i, c, e), vol = '<a class="btn sec" href="../../conta/" style="align-self:flex-start">Ir para Minha conta</a>';
+    if (st === 'confirmada') { alvo.innerHTML = h + bloco('✓ Vaga confirmada!', 'Sua equipe está confirmada no campeonato. O chaveamento aparece na página do campeonato quando for publicado.', '<a class="btn" href="../ver/?c=' + encodeURIComponent(c.slug) + '" style="align-self:flex-start">VER CAMPEONATO</a>'); return; }
+    if (st === 'pagamento_em_analise') { alvo.innerHTML = h + bloco('Pagamento em análise', 'Recebemos seu comprovante. A organização vai conferir e confirmar sua vaga. Você pode acompanhar em "Minha conta".', vol); return; }
+    if (st === 'lista_espera') { alvo.innerHTML = h + bloco('Lista de espera', 'As vagas estão preenchidas no momento. Se alguma vaga abrir, a organização entra em contato.', vol); return; }
+    if (st === 'recusada') { alvo.innerHTML = h + bloco('Inscrição não aprovada', C.esc(i.motivo || 'Fale com a organização para saber mais.'), vol); return; }
+    if (st === 'expirada') {
+      alvo.innerHTML = h + bloco('Sua reserva expirou', 'O prazo para o pagamento acabou e a vaga foi liberada. Se ainda houver vagas, você pode reservar de novo.',
+        capitao ? '<button type="button" class="btn" id="renovar" style="align-self:flex-start">RESERVAR DE NOVO</button><p class="erro" id="msg" hidden></p>' : '<p class="ajuda">Só o capitão pode refazer a reserva.</p>');
+      if (capitao) $('renovar').onclick = async function () { var r = await db.rpc('renovar_reserva', { p_inscricao: i.id }); if (r.error) { $('msg').textContent = r.error.message; $('msg').hidden = false; return; } carregar(); };
+      return;
+    }
+    // aguardando pagamento (dentro do prazo)
+    var temPix = !!(loja.pix_chave && loja.pix_chave.trim());
+    var msgZap = 'Olá, Boom Games! Quero pagar a inscrição da equipe ' + e.nome + ' na ' + c.nome + ' (código ' + i.codigo + ', ' + C.dinheiro(c.valor_inscricao) + ').';
+    var zap = loja.whatsapp ? 'https://wa.me/' + loja.whatsapp.replace(/\D/g, '') + '?text=' + encodeURIComponent(msgZap) : null;
+    var prazo = '<div class="aviso">Sua vaga fica reservada por <strong id="relogio">--:--</strong>. Depois disso ela volta a ficar disponível.</div>';
+    var motivo = i.motivo ? '<div class="aviso" style="border-color:#FF9A8A"><strong>Pagamento anterior não confirmado:</strong> ' + C.esc(i.motivo) + '</div>' : '';
+    var corpo;
+    if (temPix) {
+      var codigo = C.pix(loja, Number(c.valor_inscricao), i.codigo);
+      var qr = qrcode(0, 'M'); qr.addData(codigo); qr.make();
+      corpo = '<section class="cartao cut destaque"><h2>Pague com Pix</h2>' + motivo + prazo +
+        '<div class="linha" style="gap:28px;align-items:flex-start"><div class="qr">' + qr.createSvgTag({ cellSize: 6, margin: 0, scalable: true }) + '</div>' +
+        '<div class="pilha" style="flex:1 1 280px"><div><span class="ajuda">Valor</span><div class="titulo" style="font-size:40px">' + C.dinheiro(c.valor_inscricao) + '</div></div>' +
+        '<ol class="sub" style="margin:0;padding-left:20px;line-height:1.8"><li>Abra o app do seu banco e escolha Pix.</li><li>Leia o QR Code ou use o Pix copia e cola.</li><li>Confira o recebedor <strong>' + C.esc((loja.pix_nome || 'Boom Games').toUpperCase()) + '</strong> e pague.</li><li>Envie o comprovante abaixo.</li></ol></div></div>' +
+        '<div class="campo"><span class="rotulo">Pix copia e cola</span><div class="copia"><code id="cod">' + C.esc(codigo) + '</code><button type="button" class="btn" id="copiar">Copiar código</button></div></div>' +
+        (capitao ? '<div class="campo"><label for="arq">Comprovante (imagem ou PDF)</label><input id="arq" type="file" accept="image/*,application/pdf" style="padding:12px;min-height:auto"></div><p class="erro" id="msg" hidden></p><button type="button" class="btn" id="enviar">JÁ PAGUEI · ENVIAR COMPROVANTE</button>' : '<p class="ajuda">Só o capitão envia o comprovante.</p>') +
+        '</section>';
+    } else {
+      corpo = '<section class="cartao cut destaque"><h2>Como pagar</h2>' + motivo + prazo +
+        '<p class="sub">O pagamento por Pix pelo site estará disponível em breve. Por enquanto, combine o pagamento direto com a organização (na loja ou pelo WhatsApp) informando o código <strong>' + C.esc(i.codigo) + '</strong>. Assim que a organização registrar o pagamento, sua vaga é confirmada.</p>' +
+        (zap ? '<a class="btn" href="' + zap + '" target="_blank" rel="noopener" style="align-self:flex-start">COMBINAR PELO WHATSAPP</a>' : '<p class="ajuda">Fale com a gente pelo Instagram <a href="https://www.instagram.com/boomgames_ofc/">@boomgames_ofc</a>.</p>') + '</section>';
+    }
+    alvo.innerHTML = h + corpo;
+    var fim = new Date(i.reservado_ate).getTime();
+    function tic() { var r = Math.max(0, Math.floor((fim - Date.now()) / 1000)); var el = $('relogio'); if (el) el.textContent = (r >= 3600 ? Math.floor(r / 3600) + 'h ' : '') + String(Math.floor(r % 3600 / 60)).padStart(2, '0') + ':' + String(r % 60).padStart(2, '0'); if (r === 0) { clearInterval(timer); carregar(); } }
+    tic(); timer = setInterval(tic, 1000);
+    if (temPix) $('copiar').onclick = function () { navigator.clipboard && navigator.clipboard.writeText($('cod').textContent); $('copiar').textContent = 'Copiado!'; };
+    if (temPix && capitao) $('enviar').onclick = async function () {
+      var m = $('msg'); m.hidden = true; var f = $('arq').files[0];
+      if (!f) { m.textContent = 'Anexe o comprovante.'; m.hidden = false; return; }
+      if (f.size > 5 * 1024 * 1024) { m.textContent = 'O arquivo precisa ter menos de 5 MB.'; m.hidden = false; return; }
+      $('enviar').disabled = true;
+      var caminho = s.user.id + '/insc-' + i.id + '-' + Date.now() + '.' + (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+      var up = await db.storage.from('comprovantes').upload(caminho, f, { contentType: f.type });
+      if (up.error) { m.textContent = 'Erro ao enviar: ' + up.error.message; m.hidden = false; $('enviar').disabled = false; return; }
+      var r = await db.from('pagamentos').insert({ inscricao_id: i.id, comprovante_path: caminho });
+      if (r.error) { m.textContent = 'Erro ao registrar: ' + r.error.message; m.hidden = false; $('enviar').disabled = false; return; }
+      carregar();
+    };
+  }
+  carregar();
+})();
+</script>
+</body>
+</html>

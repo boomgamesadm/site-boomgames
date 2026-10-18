@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inscrição de equipe · Boom Games</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/img/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="../../assets/img/favicon-48.png?v=2">
+<link rel="icon" type="image/svg+xml" href="../../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../../assets/img/icone-180.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
+<main>
+<div id="conteudo" class="pilha" style="gap:24px;max-width:960px;margin:0 auto"><div class="carregando">Carregando…</div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/camp.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP, $ = BOOM.$, alvo = $('conteudo');
+  function aviso(html) { alvo.innerHTML = '<div class="estreito"><div class="cartao cut pilha">' + html + '</div></div>'; }
+  var s = await BOOM.sessao();
+  var slug = C.param('c');
+  var c = (await db.from('campeonatos').select('*').eq('slug', slug || '').maybeSingle()).data;
+  if (!c) return aviso('<h2>Campeonato não encontrado</h2><a class="btn" href="../">Ver campeonatos</a>');
+  if (!s) return aviso('<span class="olho">' + C.esc(c.nome) + '</span><h2>Entre para inscrever sua equipe</h2><p class="sub">Você precisa de uma conta de jogador. Depois de entrar, você volta direto para cá.</p><a class="btn" href="../../entrar/?volta=' + encodeURIComponent('campeonatos/inscrever/?c=' + c.slug) + '">ENTRAR</a>');
+  var uid = s.user.id;
+  var eu = (await db.from('perfis').select('nick').eq('id', uid).maybeSingle()).data;
+  if (!eu || !eu.nick) return aviso('<h2>Complete seu perfil</h2><p class="sub">Antes de montar uma equipe, escolha seu nick em "Minha conta".</p><a class="btn" href="../../conta/">COMPLETAR PERFIL</a>');
+  if (c.status !== 'inscricoes_abertas') return aviso('<span class="olho">' + C.esc(c.nome) + '</span><h2>Inscrições fechadas</h2><p class="sub">As inscrições deste campeonato não estão abertas no momento.</p><a class="btn sec" href="../ver/?c=' + encodeURIComponent(c.slug) + '">Ver campeonato</a>');
+
+  var equipes = [], sel = null, membros = [], nicks = {};
+  async function carregarEquipes() { equipes = (await db.from('equipes').select('*').eq('capitao_id', uid).order('criado_em')).data || []; }
+  async function inscricaoExistente() {
+    if (!equipes.length) return null;
+    var r = await db.from('inscricoes').select('*').eq('campeonato_id', c.id).in('equipe_id', equipes.map(function (e) { return e.id; }));
+    return (r.data || []).filter(function (i) { return i.status !== 'recusada'; })[0] || null;
+  }
+  async function carregarMembros() {
+    membros = (await db.from('equipe_membros').select('*').eq('equipe_id', sel.id).order('convidado_em')).data || [];
+    var ids = membros.map(function (m) { return m.jogador_id; });
+    var p = ids.length ? ((await db.from('jogadores_publicos').select('id, nick').in('id', ids)).data || []) : [];
+    p.forEach(function (x) { nicks[x.id] = x.nick; });
+  }
+  await carregarEquipes();
+  var ja = await inscricaoExistente();
+  if (ja) { location.replace('../pagamento/?i=' + ja.id); return; }
+
+  function contar() {
+    var tit = membros.filter(function (m) { return m.status === 'aceito' && (m.papel === 'capitao' || m.papel === 'titular'); }).length;
+    var pend = membros.filter(function (m) { return m.status === 'convidado'; }).length;
+    return { tit: tit, pend: pend, res: membros.filter(function (m) { return m.papel === 'reserva' && m.status !== 'recusado'; }).length };
+  }
+  function desenhar() {
+    var cab = '<div class="pilha" style="gap:6px"><a class="ajuda" href="../ver/?c=' + encodeURIComponent(c.slug) + '">← ' + C.esc(c.nome) + '</a><span class="olho">INSCRIÇÃO DE EQUIPE</span><h1>Monte seu time</h1>' +
+      '<p class="sub">' + C.esc(c.nome) + ' · ' + c.tamanho_elenco + (c.tamanho_elenco > 1 ? ' titulares' : ' jogador') + (c.max_reservas ? ' + até ' + c.max_reservas + ' reserva' : '') + ' · ' + (Number(c.valor_inscricao) > 0 ? C.dinheiro(c.valor_inscricao) : 'gratuita') + '</p></div>';
+    var escolha = '<section class="cartao cut"><h2>1 · Sua equipe</h2>' +
+      (equipes.length ? '<div class="grade">' + equipes.map(function (e) { return '<button type="button" class="membro" data-eq="' + e.id + '" style="cursor:pointer;font:inherit;color:#fff;text-align:left;' + (sel && sel.id === e.id ? 'border-color:var(--laranja);background:rgba(255,122,26,.1)' : '') + '"><span class="av on">' + C.esc(e.sigla) + '</span><span class="nm"><b>' + C.esc(e.nome) + '</b><small>Você é o capitão</small></span></button>'; }).join('') + '</div>' : '') +
+      '<details' + (equipes.length ? '' : ' open') + '><summary style="cursor:pointer;font-weight:700;padding:8px 0">+ Criar nova equipe</summary>' +
+      '<div class="grade" style="margin-top:10px;grid-template-columns:minmax(0,1fr) 120px"><div class="campo"><label for="eq-nome">Nome da equipe</label><input id="eq-nome" type="text" maxlength="40"></div><div class="campo"><label for="eq-sigla">Sigla</label><input id="eq-sigla" type="text" maxlength="4" style="text-transform:uppercase"></div></div>' +
+      '<button type="button" class="btn" id="criar" style="margin-top:12px">Criar equipe</button><p class="erro" id="msg-eq" hidden></p></details></section>';
+    var time = '';
+    if (sel) {
+      var k = contar(), precisa = c.tamanho_elenco;
+      time = '<section class="cartao cut"><div class="linha entre"><h2>2 · Jogadores</h2><span class="' + (k.tit >= precisa ? 'ok' : 'ajuda') + '">' + k.tit + ' de ' + precisa + ' confirmados' + (k.pend ? ' · ' + k.pend + ' aguardando aceite' : '') + '</span></div>' +
+        '<div class="pilha" style="gap:8px">' + membros.map(function (m) {
+          var st = m.status === 'aceito' ? '<span class="selo lar">CONFIRMADO</span>' : m.status === 'convidado' ? '<span class="selo po">AGUARDANDO ACEITE</span>' : '<span class="selo cz">RECUSOU</span>';
+          var ctl = m.papel === 'capitao' ? '<span class="selo lin">CAPITÃO</span>' :
+            '<select data-papel="' + m.jogador_id + '" aria-label="Posição de @' + C.esc(nicks[m.jogador_id]) + '" style="width:auto;min-height:40px"><option value="titular"' + (m.papel === 'titular' ? ' selected' : '') + '>Titular</option><option value="reserva"' + (m.papel === 'reserva' ? ' selected' : '') + '>Reserva</option></select>' +
+            '<button type="button" class="mini" data-remover="' + m.jogador_id + '" aria-label="Remover @' + C.esc(nicks[m.jogador_id]) + '">✕</button>';
+          return '<div class="membro"><span class="av' + (m.status === 'aceito' ? ' on' : '') + '">' + C.esc((nicks[m.jogador_id] || '?')[0].toUpperCase()) + '</span><span class="nm"><b>@' + C.esc(nicks[m.jogador_id] || '…') + '</b></span>' + st + ctl + '</div>';
+        }).join('') + '</div>' +
+        '<div class="campo"><label for="busca">Convidar jogador pelo nick</label><input id="busca" type="text" placeholder="Digite pelo menos 2 letras" autocomplete="off"></div><div id="resultados" class="pilha" style="gap:6px"></div>' +
+        '<div class="aviso">Os convidados aceitam o convite em <strong>Minha conta</strong>. Quem ainda não tem conta precisa criar uma em <strong>' + C.esc(BOOM.url('entrar/')) + '</strong>. <button type="button" class="btn sec" id="copiar" style="min-height:36px;margin-left:6px">Copiar link</button></div></section>' +
+        '<section class="cartao cut destaque"><h2>3 · Inscrição</h2>' +
+        '<label class="check"><input type="checkbox" id="aceite"><span>Li o <a href="../ver/?c=' + encodeURIComponent(c.slug) + '" target="_blank">regulamento</a> e todos os jogadores concordam em participar.</span></label>' +
+        '<p class="erro" id="msg-insc" role="alert" hidden></p>' +
+        '<button type="button" class="btn" id="inscrever"' + (k.tit >= precisa ? '' : ' disabled') + '>' + (k.tit >= precisa ? 'FAZER INSCRIÇÃO' : 'FALTAM ' + (precisa - k.tit) + ' CONFIRMADO' + (precisa - k.tit > 1 ? 'S' : '')) + '</button>' +
+        '<span class="ajuda">' + (Number(c.valor_inscricao) > 0 ? 'Depois da inscrição, sua vaga fica reservada enquanto você faz o pagamento.' : 'Inscrição gratuita: a vaga é confirmada na hora.') + '</span></section>';
+    }
+    alvo.innerHTML = cab + escolha + time;
+    alvo.querySelectorAll('[data-eq]').forEach(function (b) { b.onclick = async function () { sel = equipes.filter(function (e) { return e.id == b.dataset.eq; })[0]; await carregarMembros(); desenhar(); }; });
+    $('criar').onclick = async function () {
+      var m = $('msg-eq'); m.hidden = true;
+      var r = await db.rpc('criar_equipe', { p_nome: $('eq-nome').value, p_sigla: $('eq-sigla').value || $('eq-nome').value.slice(0, 3) });
+      if (r.error) { m.textContent = r.error.message; m.hidden = false; return; }
+      await carregarEquipes(); sel = equipes.filter(function (e) { return e.id === r.data; })[0]; await carregarMembros(); desenhar();
+    };
+    if (!sel) return;
+    var t = null;
+    $('busca').oninput = function () {
+      clearTimeout(t); var q = $('busca').value.trim().replace(/[%_]/g, '');
+      if (q.length < 2) { $('resultados').innerHTML = ''; return; }
+      t = setTimeout(async function () {
+        var r = await db.from('jogadores_publicos').select('id, nick, cidade').ilike('nick', '%' + q + '%').limit(8);
+        var ja = membros.map(function (m) { return m.jogador_id; });
+        var lst = (r.data || []).filter(function (p) { return ja.indexOf(p.id) < 0; });
+        $('resultados').innerHTML = lst.length ? lst.map(function (p) { return '<div class="membro"><span class="av">' + C.esc(p.nick[0].toUpperCase()) + '</span><span class="nm"><b>@' + C.esc(p.nick) + '</b><small>' + C.esc(p.cidade || '') + '</small></span><button type="button" class="btn" style="min-height:40px" data-convidar="' + p.id + '">Convidar</button></div>'; }).join('') : '<span class="ajuda">Nenhum jogador encontrado com esse nick.</span>';
+        $('resultados').querySelectorAll('[data-convidar]').forEach(function (b) {
+          b.onclick = async function () {
+            b.disabled = true;
+            var k = contar(), papel = k.tit + k.pend >= c.tamanho_elenco ? 'reserva' : 'titular';
+            var r2 = await db.from('equipe_membros').insert({ equipe_id: sel.id, jogador_id: b.dataset.convidar, papel: papel });
+            if (r2.error) { alert(r2.error.message); b.disabled = false; return; }
+            await carregarMembros(); desenhar();
+          };
+        });
+      }, 350);
+    };
+    alvo.querySelectorAll('[data-papel]').forEach(function (s2) { s2.onchange = async function () { var r = await db.from('equipe_membros').update({ papel: s2.value }).eq('equipe_id', sel.id).eq('jogador_id', s2.dataset.papel); if (r.error) alert(r.error.message); await carregarMembros(); desenhar(); }; });
+    alvo.querySelectorAll('[data-remover]').forEach(function (b) { b.onclick = async function () { if (!confirm('Remover este jogador da equipe?')) return; var r = await db.from('equipe_membros').delete().eq('equipe_id', sel.id).eq('jogador_id', b.dataset.remover); if (r.error) alert(r.error.message); await carregarMembros(); desenhar(); }; });
+    $('copiar').onclick = function () { navigator.clipboard && navigator.clipboard.writeText(BOOM.url('entrar/')); $('copiar').textContent = 'Copiado!'; };
+    $('inscrever').onclick = async function () {
+      var m = $('msg-insc'); m.hidden = true;
+      if (!$('aceite').checked) { m.textContent = 'Marque o aceite do regulamento.'; m.hidden = false; return; }
+      $('inscrever').disabled = true;
+      var r = await db.from('inscricoes').insert({ campeonato_id: c.id, equipe_id: sel.id }).select().single();
+      if (r.error) { m.textContent = r.error.message; m.hidden = false; $('inscrever').disabled = false; return; }
+      location.href = '../pagamento/?i=' + r.data.id;
+    };
+  }
+  if (equipes.length === 1) { sel = equipes[0]; await carregarMembros(); }
+  desenhar();
+})();
+</script>
+</body>
+</html>

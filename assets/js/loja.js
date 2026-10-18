@@ -91,12 +91,16 @@
 
   // ---------- dados vindos do painel (Supabase)
   if (!db) return;
-  db.from('loja_config').select('whatsapp, instagram, mostrar_marcas').eq('id', 1).maybeSingle().then(function (r) {
+  db.from('loja_config').select('whatsapp, instagram, mostrar_marcas, endereco, referencia, maps_url').eq('id', 1).maybeSingle().then(function (r) {
     if (r.error) { console.warn(r.error.message); return; }
     if (r.data) {
       loja = Object.assign(loja, r.data);
       var sec = document.querySelector('[data-secao-marcas]');
       if (sec) sec.hidden = !loja.mostrar_marcas;
+      var d = r.data;
+      if (d.referencia && document.getElementById('loja-ref')) document.getElementById('loja-ref').textContent = d.referencia;
+      if (d.endereco && document.getElementById('loja-end')) document.getElementById('loja-end').textContent = d.endereco;
+      if (d.maps_url) document.querySelectorAll('[data-loja-maps]').forEach(function (a) { a.href = d.maps_url; });
       atualizar();
     }
   });

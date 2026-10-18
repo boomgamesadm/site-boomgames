@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campeonato · Boom Games</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/img/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="../../assets/img/favicon-48.png?v=2">
+<link rel="icon" type="image/svg+xml" href="../../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../../assets/img/icone-180.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
+<main>
+<div id="conteudo" class="pilha" style="gap:28px"><div class="carregando">Carregando campeonato…</div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/camp.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP, slug = C.param('c');
+  var r = await db.from('campeonatos').select('*').eq('slug', slug || '').maybeSingle();
+  var c = r.data;
+  if (!c) { BOOM.$('conteudo').innerHTML = '<div class="vazio">Campeonato não encontrado. <a href="../">Ver todos os campeonatos</a></div>'; return; }
+  document.title = c.nome + ' · Boom Games';
+  var oc = (await db.rpc('vagas_ocupadas', { camp: c.id })).data || 0;
+  var conf = await db.from('inscricoes').select('equipe_id').eq('campeonato_id', c.id).eq('status', 'confirmada');
+  var ids = (conf.data || []).map(function (x) { return x.equipe_id; });
+  var equipes = ids.length ? ((await db.from('equipes').select('id, nome, sigla').in('id', ids)).data || []) : [];
+  var aberto = c.status === 'inscricoes_abertas';
+  var premios = [['1º', c.premio_1], ['2º', c.premio_2], ['3º', c.premio_3]].filter(function (p) { return p[1]; });
+  BOOM.$('conteudo').innerHTML =
+    '<a href="../" class="ajuda">← Todos os campeonatos</a>' +
+    '<div class="linha" style="gap:28px;align-items:stretch">' +
+      '<div class="cut" style="flex:1 1 420px;min-height:240px;display:flex">' + C.capa(c, true).replace('class="capa"', 'class="capa" style="flex:1;min-height:240px"') + '</div>' +
+      '<div class="pilha" style="flex:1 1 340px;gap:14px;justify-content:center">' +
+        '<h1>' + C.esc(c.nome) + '</h1>' + (c.edicao ? '<span class="olho">' + C.esc(c.edicao) + '</span>' : '') +
+        '<span class="sub">' + C.esc([c.plataforma, c.modalidade, C.FORMATO[c.formato]].filter(Boolean).join(' · ')) + '</span>' +
+        (aberto ? '<a class="btn" href="../inscrever/?c=' + encodeURIComponent(c.slug) + '" style="align-self:flex-start">INSCREVER MINHA EQUIPE</a>' : '<span>' + C.selo(C.STATUS, c.status) + '</span>') +
+      '</div></div>' +
+    '<dl class="dados cartao cut" style="margin:0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">' +
+      '<div><dt>DATA DO EVENTO</dt><dd>' + C.data(c.data_evento) + '</dd></div>' +
+      '<div><dt>INSCRIÇÕES ATÉ</dt><dd>' + C.dataHora(c.inscricoes_fim) + '</dd></div>' +
+      '<div><dt>VAGAS</dt><dd>' + oc + ' de ' + c.vagas + '</dd></div>' +
+      '<div><dt>INSCRIÇÃO</dt><dd>' + (Number(c.valor_inscricao) > 0 ? C.dinheiro(c.valor_inscricao) + (c.tamanho_elenco > 1 ? ' por equipe' : '') : 'Gratuita') + '</dd></div>' +
+      '<div><dt>ELENCO</dt><dd>' + c.tamanho_elenco + (c.max_reservas ? ' + ' + c.max_reservas + ' reserva' : '') + '</dd></div>' +
+      '<div><dt>LOCAL</dt><dd>Boom Games</dd></div></dl>' +
+    (premios.length ? '<section class="pilha"><h2>Premiação</h2><div class="grade">' + premios.map(function (p, i) { return '<div class="cartao cut' + (i === 0 ? ' destaque' : '') + '" style="gap:6px"><span class="olho">' + p[0] + ' LUGAR</span><span class="titulo" style="font-size:24px">' + C.esc(p[1]) + '</span></div>'; }).join('') + '</div></section>' : '') +
+    '<section class="pilha"><h2>Equipes confirmadas <span style="color:var(--apagado)">· ' + equipes.length + '</span></h2>' +
+      (equipes.length ? '<div class="grade">' + equipes.map(function (e) { return '<div class="membro"><span class="av on">' + C.esc(e.sigla) + '</span><span class="nm"><b>' + C.esc(e.nome) + '</b></span></div>'; }).join('') + '</div>' : '<div class="vazio">Nenhuma equipe confirmada ainda.' + (aberto ? ' Seja a primeira!' : '') + '</div>') + '</section>' +
+    (c.regulamento ? '<section class="pilha"><h2>Regulamento</h2><div class="cartao cut" style="white-space:pre-line;color:var(--suave);line-height:1.7">' + C.esc(c.regulamento) + '</div></section>' : '');
+})();
+</script>
+</body>
+</html>

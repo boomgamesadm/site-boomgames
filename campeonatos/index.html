@@ -1,30 +1,56 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-raiz="../">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Campeonatos Copa Boom — em breve · Boom Games</title>
+<title>Campeonatos Copa Boom · Boom Games</title>
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png?v=2">
 <link rel="icon" type="image/png" sizes="48x48" href="../assets/img/favicon-48.png?v=2">
 <link rel="icon" type="image/svg+xml" href="../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../assets/img/icone-180.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,700;1,700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(255,122,26,.22),transparent 70%),#0A0A0B;color:#fff;font-family:'Manrope',system-ui,sans-serif;text-align:center;padding:32px;box-sizing:border-box}
-main{display:flex;flex-direction:column;align-items:center;gap:20px;max-width:620px}
-h1{margin:0;font-family:'Chakra Petch',sans-serif;font-size:clamp(40px,8vw,72px);line-height:1;text-transform:uppercase}
-h1 span{color:#FF7A1A}
-p{margin:0;color:#C4C4CA;font-size:18px;line-height:1.6}
-a{display:inline-flex;align-items:center;min-height:52px;padding:0 26px;background:#FF7A1A;color:#0A0A0B;font-weight:800;text-decoration:none;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
-a:focus-visible{outline:2px solid #fff;outline-offset:3px}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/app.css">
 </head>
 <body>
+<header class="topo"><div class="topo-in"><a href="../" aria-label="Boom Games — página inicial"><img src="../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../" class="esconde">Loja</a><a href="../conta/">Minha conta</a></nav></div></header>
 <main>
-<img src="../assets/img/logo-boom-games.png" alt="Boom Games" style="height:90px;width:auto">
-<h1>Copa <span>Boom</span></h1>
-<p>A área de campeonatos está sendo preparada: inscrições de equipes, chaveamento, resultados e ranking chegam em breve.</p>
-<a href="../">Voltar para a loja</a>
+<div class="pilha" style="gap:28px">
+<div class="pilha" style="gap:8px"><span class="olho">ARENA BOOM GAMES</span><h1>Campeonatos <span style="color:var(--laranja)">Copa Boom</span></h1><p class="sub">Monte sua equipe, inscreva-se e dispute presencialmente na Boom Games.</p></div>
+<div class="abas" role="tablist" aria-label="Filtrar campeonatos" id="filtros"></div>
+<div id="lista" class="camp-grade"><div class="carregando" style="grid-column:1/-1">Carregando campeonatos…</div></div>
+</div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/camp.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP;
+  var r = await db.from('campeonatos').select('*').neq('status', 'rascunho').order('data_evento', { ascending: true, nullsFirst: false });
+  var todos = r.data || [];
+  var vagas = {};
+  await Promise.all(todos.map(async function (c) { var v = await db.rpc('vagas_ocupadas', { camp: c.id }); vagas[c.id] = v.data || 0; }));
+  var filtros = [['todos', 'Todos'], ['inscricoes_abertas', 'Inscrições abertas'], ['em_andamento', 'Em andamento'], ['finalizado', 'Finalizados']];
+  var atual = 'todos';
+  function desenhar() {
+    BOOM.$('filtros').innerHTML = filtros.map(function (f) { return '<button type="button" role="tab" aria-selected="' + (f[0] === atual) + '" data-f="' + f[0] + '">' + f[1] + '</button>'; }).join('');
+    BOOM.$('filtros').querySelectorAll('button').forEach(function (b) { b.onclick = function () { atual = b.dataset.f; desenhar(); }; });
+    var lista = todos.filter(function (c) { return atual === 'todos' || c.status === atual || (atual === 'inscricoes_abertas' && false); });
+    if (!lista.length) { BOOM.$('lista').innerHTML = '<div class="vazio" style="grid-column:1/-1">Nenhum campeonato aqui no momento. Novos campeonatos são anunciados no Instagram <a href="https://www.instagram.com/boomgames_ofc/">@boomgames_ofc</a>.</div>'; return; }
+    BOOM.$('lista').innerHTML = lista.map(function (c) {
+      var oc = vagas[c.id] || 0, pct = Math.min(100, Math.round(oc / Math.max(1, c.vagas) * 100));
+      return '<a class="camp-card cut-sm" href="ver/?c=' + encodeURIComponent(c.slug) + '">' + C.capa(c, true) +
+        '<div class="corpo"><div><div class="titulo" style="font-size:22px">' + C.esc(c.nome) + (c.edicao ? ' <span style="color:var(--apagado);font-size:15px">· ' + C.esc(c.edicao) + '</span>' : '') + '</div><span class="ajuda">' + C.esc([c.plataforma, c.modalidade].filter(Boolean).join(' · ')) + '</span></div>' +
+        '<dl class="dados" style="margin:0"><div><dt>DATA</dt><dd>' + C.data(c.data_evento) + '</dd></div><div><dt>FORMATO</dt><dd>' + C.esc(C.FORMATO[c.formato] || '') + '</dd></div>' +
+        '<div><dt>INSCRIÇÃO</dt><dd>' + (Number(c.valor_inscricao) > 0 ? C.dinheiro(c.valor_inscricao) : 'Gratuita') + '</dd></div><div><dt>PREMIAÇÃO</dt><dd>' + C.esc(c.premio_1 || '—') + '</dd></div></dl>' +
+        '<div class="pilha" style="gap:6px"><div class="barra"><i style="width:' + pct + '%"></i></div><span class="ajuda">' + oc + ' de ' + c.vagas + ' vagas preenchidas</span></div>' +
+        '<span class="btn largo" style="margin-top:auto">' + (c.status === 'inscricoes_abertas' ? 'VER E INSCREVER' : 'VER CAMPEONATO') + '</span></div></a>';
+    }).join('');
+  }
+  desenhar();
+})();
+</script>
 </body>
 </html>

@@ -124,3 +124,40 @@ body:has(.arena) .arena{flex:1 1 auto;min-height:0}
   body:has(.arena){height:auto;overflow:auto}
   body:has(.arena) .arena{min-height:calc(100vh - 73px)}
 }
+
+/* ---------- campeonatos */
+.capa{position:relative;overflow:hidden;background:#0E0E10;display:flex;flex-direction:column;justify-content:flex-end;padding:18px}
+.capa::before{content:"";position:absolute;right:-40px;top:-30px;width:60%;height:160%;background:linear-gradient(135deg,var(--laranja),var(--laranja-esc));transform:skewX(-18deg)}
+.capa::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:22px 22px}
+.capa img.foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.capa .k{position:relative;z-index:2;font-size:11px;font-weight:800;letter-spacing:4px;color:var(--laranja);text-shadow:0 1px 0 #000}
+.capa .j{position:relative;z-index:2;font-family:'Chakra Petch',sans-serif;font-weight:700;font-style:italic;font-size:30px;line-height:1.05;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.capa .p{position:absolute;z-index:2;right:14px;top:12px;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;color:#0A0A0B}
+.capa .st{position:absolute;z-index:3;left:14px;top:14px}
+.camp-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:20px}
+.camp-card{background:var(--grafite);border:1px solid var(--linha);display:flex;flex-direction:column;text-decoration:none;color:#fff;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.camp-card:hover{transform:translateY(-4px);border-color:var(--laranja);box-shadow:0 18px 40px -18px rgba(255,122,26,.55);color:#fff}
+.camp-card .capa{height:150px}
+.camp-card .corpo{padding:18px;display:flex;flex-direction:column;gap:12px;flex-grow:1}
+.dados{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;font-size:14px}
+.dados dt{color:var(--apagado);font-size:11px;font-weight:800;letter-spacing:1px}
+.dados dd{margin:2px 0 0;font-weight:700}
+.barra{height:6px;background:#26262B;overflow:hidden}.barra i{display:block;height:100%;background:var(--laranja)}
+.selo.br{background:#fff;color:var(--preto)}.selo.cz{background:#2E2E34;color:#E4E4E7}.selo.po{border:1px solid var(--laranja);color:#fff}
+.membro{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--campo);border:1px solid #2E2E34}
+.membro .av{width:38px;height:38px;flex-shrink:0;background:#0A0A0B;border:1px solid #3A3A40;display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch',sans-serif;font-weight:700}
+.membro .av.on{border-color:var(--laranja)}
+.membro .nm{flex:1;min-width:0;display:flex;flex-direction:column}
+.membro .nm b{font-weight:800}.membro .nm small{color:var(--apagado)}
+.qr{background:#fff;padding:14px;align-self:center;line-height:0}
+.qr svg,.qr img{width:240px;height:240px}
+.copia{display:flex;gap:8px;flex-wrap:wrap}
+.copia code{flex:1 1 200px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:14px;background:var(--campo);border:1px solid #34343A;font-size:13px;color:#D4D4D8}
+.abas{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid #222226}
+.abas button{min-height:48px;padding:0 16px;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--apagado);font:inherit;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
+.abas button[aria-selected=true]{color:#fff;border-bottom-color:var(--laranja)}
+.tabela{width:100%;border-collapse:collapse;font-size:14px}
+.tabela th{text-align:left;color:var(--apagado);font-size:12px;letter-spacing:1px;padding:10px 12px;font-weight:700}
+.tabela td{padding:12px;border-top:1px solid #222226;vertical-align:top}
+.rolar{overflow-x:auto}
+.vazio{padding:28px;border:1px dashed #3A3A40;color:var(--apagado);text-align:center}
