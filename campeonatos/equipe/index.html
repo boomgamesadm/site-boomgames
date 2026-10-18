@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equipe · Boom Games</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/img/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="../../assets/img/favicon-48.png?v=2">
+<link rel="icon" type="image/svg+xml" href="../../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../../assets/img/icone-180.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
+<main>
+<div id="conteudo" class="pilha" style="gap:24px"><div class="carregando">Carregando equipe…</div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/camp.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP, alvo = BOOM.$('conteudo'), id = C.param('id');
+  var e = (await db.from('equipes').select('*').eq('id', id || 0).maybeSingle()).data;
+  if (!e) { alvo.innerHTML = '<div class="vazio">Equipe não encontrada.</div>'; return; }
+  document.title = e.nome + ' · Boom Games';
+  var mem = (await db.from('equipe_membros').select('*').eq('equipe_id', e.id).eq('status', 'aceito')).data || [];
+  var nk = {}; ((mem.length ? (await db.from('jogadores_publicos').select('id, nick').in('id', mem.map(function (m) { return m.jogador_id; }))).data : []) || []).forEach(function (x) { nk[x.id] = x.nick; });
+  var ins = (await db.from('inscricoes').select('campeonato_id').eq('equipe_id', e.id).eq('status', 'confirmada')).data || [];
+  var camps = ins.length ? ((await db.from('campeonatos').select('id, nome, slug, status, campeao_id, data_evento').in('id', ins.map(function (i) { return i.campeonato_id; }))).data || []) : [];
+  var col = {}; ((await db.from('colocacoes').select('*').eq('equipe_id', e.id)).data || []).forEach(function (x) { col[x.campeonato_id] = x.colocacao; });
+  var rk = (await db.from('ranking_equipes').select('*').eq('equipe_id', e.id).maybeSingle()).data;
+  var jg = (await db.from('partidas').select('*').or('equipe_a.eq.' + e.id + ',equipe_b.eq.' + e.id).eq('status', 'publicada').order('id', { ascending: false }).limit(10)).data || [];
+  var oids = []; jg.forEach(function (p) { [p.equipe_a, p.equipe_b].forEach(function (x) { if (x && oids.indexOf(x) < 0) oids.push(x); }); });
+  var E = {}; ((oids.length ? (await db.from('equipes').select('id, nome, sigla').in('id', oids)).data : []) || []).forEach(function (x) { E[x.id] = x; });
+  var NOME = { campeao: 'CAMPEÃ', vice: 'VICE', terceiro: '3º LUGAR', semifinal: 'SEMIFINAL', quartas: 'QUARTAS', participacao: 'PARTICIPOU' };
+  var cap = mem.filter(function (m) { return m.papel === 'capitao'; })[0];
+  alvo.innerHTML = '<section class="linha" style="gap:22px"><div class="cut" style="width:110px;height:110px;background:linear-gradient(145deg,#1E1E22,#0A0A0B);border:2px solid var(--laranja);display:flex;align-items:center;justify-content:center;font-family:Chakra Petch,sans-serif;font-weight:700;font-style:italic;font-size:40px;box-shadow:0 0 50px -10px rgba(255,122,26,.6)">' + C.esc(e.sigla) + '</div>' +
+    '<div class="pilha" style="gap:6px"><span class="olho">EQUIPE</span><h1>' + C.esc(e.nome) + '</h1><span class="sub">' + (cap ? 'Capitão @' + C.esc(nk[cap.jogador_id] || '') : '') + '</span></div></section>' +
+    '<div class="grade">' + [['CAMPEONATOS', camps.length], ['TÍTULOS', rk ? rk.titulos : 0], ['PONTOS NO RANKING', rk ? rk.pontos : 0], ['JOGADORES', mem.length]].map(function (x) { return '<div class="cartao cut" style="gap:4px;padding:18px"><span class="olho" style="color:var(--apagado)">' + x[0] + '</span><span class="titulo" style="font-size:34px">' + x[1] + '</span></div>'; }).join('') + '</div>' +
+    '<section class="pilha"><h2>Elenco</h2><div class="grade">' + mem.map(function (m) { return '<a class="membro" style="text-decoration:none;color:#fff" href="../jogador/?n=' + encodeURIComponent(nk[m.jogador_id] || '') + '"><span class="av' + (m.papel === 'capitao' ? ' on' : '') + '">' + C.esc((nk[m.jogador_id] || '?')[0].toUpperCase()) + '</span><span class="nm"><b>@' + C.esc(nk[m.jogador_id] || '') + '</b><small>' + (m.papel === 'capitao' ? 'Capitão' : m.papel === 'reserva' ? 'Reserva' : 'Titular') + '</small></span></a>'; }).join('') + '</div></section>' +
+    '<section class="pilha"><h2>Campeonatos</h2>' + (camps.length ? camps.map(function (cc) { return '<a class="membro" style="text-decoration:none;color:#fff" href="../ver/?c=' + encodeURIComponent(cc.slug) + '"><span class="nm"><b>' + C.esc(cc.nome) + '</b><small>' + C.data(cc.data_evento) + '</small></span>' + (col[cc.id] ? '<span class="selo ' + (col[cc.id] === 'campeao' ? 'lar' : 'lin') + '">' + NOME[col[cc.id]] + '</span>' : C.selo(C.STATUS, cc.status)) + '</a>'; }).join('') : '<div class="vazio">Ainda sem campeonatos.</div>') + '</section>' +
+    (jg.length ? '<section class="pilha"><h2>Últimas partidas</h2><div class="grade">' + jg.map(function (p) { return C.cartaoJogo(p, E); }).join('') + '</div></section>' : '');
+})();
+</script>
+</body>
+</html>

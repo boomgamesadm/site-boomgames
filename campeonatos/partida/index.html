@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partida · Boom Games</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/img/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="../../assets/img/favicon-48.png?v=2">
+<link rel="icon" type="image/svg+xml" href="../../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../../assets/img/icone-180.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
+<main>
+<div id="conteudo" class="pilha" style="gap:24px;max-width:900px;margin:0 auto"><div class="carregando">Carregando partida…</div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/camp.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP, $ = BOOM.$, alvo = $('conteudo'), id = C.param('id');
+  async function desenhar() {
+    var p = (await db.from('partidas').select('*').eq('id', id || 0).maybeSingle()).data;
+    if (!p) { alvo.innerHTML = '<div class="vazio">Partida não encontrada.</div>'; return; }
+    var c = (await db.from('campeonatos').select('*').eq('id', p.campeonato_id).single()).data;
+    var ids = [p.equipe_a, p.equipe_b].filter(Boolean);
+    var E = {}; ((ids.length ? (await db.from('equipes').select('*').in('id', ids)).data : []) || []).forEach(function (e) { E[e.id] = e; });
+    var mapas = (await db.from('mapas').select('*').eq('partida_id', p.id).order('numero')).data || [];
+    var mem = ids.length ? ((await db.from('equipe_membros').select('*').in('equipe_id', ids).eq('status', 'aceito')).data || []) : [];
+    var nk = {}; var pids = mem.map(function (m) { return m.jogador_id; });
+    ((pids.length ? (await db.from('jogadores_publicos').select('id, nick').in('id', pids)).data : []) || []).forEach(function (x) { nk[x.id] = x.nick; });
+    document.title = (E[p.equipe_a] ? E[p.equipe_a].nome : '?') + ' x ' + (E[p.equipe_b] ? E[p.equipe_b].nome : '?') + ' · ' + c.nome;
+    var fim = p.status === 'publicada';
+    function eq(x, rot) { var e = E[x]; var v = fim && p.vencedor_id === x; return '<a class="eq' + (v ? ' venc' : '') + '" href="' + (e ? '../equipe/?id=' + e.id : '#') + '"><span class="sg">' + C.esc(e ? e.sigla : '?') + '</span><b style="font-size:clamp(15px,2.4vw,20px)">' + C.esc(e ? e.nome : (rot || 'A definir')) + '</b></a>'; }
+    function elenco(x) { return '<section class="cartao cut" style="flex:1 1 280px;gap:8px"><h2 style="font-size:18px">' + C.esc(E[x] ? E[x].nome : 'A definir') + '</h2>' + mem.filter(function (m) { return m.equipe_id === x; }).map(function (m) { return '<a class="membro" style="text-decoration:none;color:#fff" href="../jogador/?n=' + encodeURIComponent(nk[m.jogador_id] || '') + '"><span class="av' + (m.papel === 'capitao' ? ' on' : '') + '">' + C.esc((nk[m.jogador_id] || '?')[0].toUpperCase()) + '</span><span class="nm"><b>@' + C.esc(nk[m.jogador_id] || '') + '</b><small>' + (m.papel === 'capitao' ? 'Capitão' : m.papel === 'reserva' ? 'Reserva' : 'Titular') + '</small></span></a>'; }).join('') + '</section>'; }
+    var live = c.transmissao_url && p.status === 'em_andamento';
+    alvo.innerHTML = '<a class="ajuda" href="../ver/?c=' + encodeURIComponent(c.slug) + '#chaveamento">← ' + C.esc(c.nome) + '</a>' +
+      '<section class="cartao cut destaque" style="align-items:center;gap:20px;background:radial-gradient(ellipse 60% 90% at 50% 0%,rgba(255,122,26,.22),transparent 70%),#111113">' +
+      '<div class="linha" style="justify-content:center">' + C.selo(C.STATUS_JOGO, p.status) + '<span class="selo lin">' + C.esc((C.FASES[p.fase] || p.fase).toUpperCase()) + (p.codigo ? ' · ' + C.esc(p.codigo) : '') + '</span>' + (p.inicio ? '<span class="selo lin">' + C.dataHora(p.inicio) + '</span>' : '') + '</div>' +
+      '<div class="placar-grande" style="width:100%">' + eq(p.equipe_a, p.rotulo_a) + '<div class="pilha" style="align-items:center;gap:4px">' + (fim && p.placar_a != null ? '<span class="num"><span style="color:var(--laranja)">' + p.placar_a + '</span><span style="color:#4A4A52">:</span>' + p.placar_b + '</span>' : '<span class="num" style="font-style:italic;color:var(--laranja)">VS</span>') +
+      '<span class="ajuda">' + (fim ? (p.vencedor_id && E[p.vencedor_id] ? E[p.vencedor_id].nome + ' venceu' : 'Empate') : p.status === 'em_andamento' ? 'Resultado ao fim da partida' : 'Partida agendada') + '</span></div>' + eq(p.equipe_b, p.rotulo_b) + '</div>' +
+      '<div class="linha" style="justify-content:center">' + (live ? '<a class="btn" href="' + C.esc(c.transmissao_url) + '" target="_blank" rel="noopener">● ASSISTIR AO VIVO</a>' : '') + '<button type="button" class="btn sec" id="comp">Compartilhar partida</button></div></section>' +
+      (mapas.length ? '<section class="pilha"><h2>Mapas</h2><div class="grade">' + mapas.map(function (m) { var a = m.pontos_a > m.pontos_b; return '<div class="cartao cut" style="gap:8px;padding:18px"><span class="olho">MAPA ' + m.numero + (m.nome ? ' · ' + C.esc(m.nome.toUpperCase()) : '') + '</span><span class="titulo" style="font-size:28px"><span style="color:' + (a ? 'var(--laranja)' : '#8E8E96') + '">' + (m.pontos_a == null ? '–' : m.pontos_a) + '</span> <span style="color:#4A4A52">x</span> <span style="color:' + (!a ? 'var(--laranja)' : '#8E8E96') + '">' + (m.pontos_b == null ? '–' : m.pontos_b) + '</span></span></div>'; }).join('') + '</div></section>' : '') +
+      (ids.length ? '<div class="linha" style="align-items:stretch">' + (p.equipe_a ? elenco(p.equipe_a) : '') + (p.equipe_b ? elenco(p.equipe_b) : '') + '</div>' : '');
+    $('comp').onclick = function () { if (navigator.share) navigator.share({ title: document.title, url: location.href }); else { navigator.clipboard.writeText(location.href); $('comp').textContent = 'Link copiado!'; } };
+  }
+  await desenhar();
+  db.channel('partida-' + id).on('postgres_changes', { event: '*', schema: 'public', table: 'partidas', filter: 'id=eq.' + id }, function () { desenhar(); }).subscribe();
+})();
+</script>
+</body>
+</html>

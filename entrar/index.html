@@ -30,14 +30,12 @@
 <script src="../assets/js/app.js"></script>
 <script>
 (async function () {
-  var volta = new URLSearchParams(location.search).get('volta') || 'conta/';
-  if (!/^[a-z0-9\/_\-?=&.%]+$/i.test(volta) || volta.indexOf('//') >= 0) volta = 'conta/';
   var s = await BOOM.sessao();
-  if (s) { location.replace(BOOM.url(volta)); return; }
+  if (s) { location.replace(BOOM.url('conta/')); return; }
   document.querySelectorAll('[data-provedor]').forEach(function (b) {
     b.addEventListener('click', async function () {
       b.disabled = true;
-      var r = await BOOM.login(b.dataset.provedor, volta);
+      var r = await BOOM.login(b.dataset.provedor, 'conta/');
       if (r.error) { b.disabled = false; var m = BOOM.$('msg'); m.textContent = 'Não foi possível entrar: ' + r.error.message; m.hidden = false; }
     });
   });

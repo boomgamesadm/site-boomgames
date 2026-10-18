@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranking da temporada · Boom Games</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/img/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="../../assets/img/favicon-48.png?v=2">
+<link rel="icon" type="image/svg+xml" href="../../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../../assets/img/icone-180.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
+<main>
+<div class="pilha" style="gap:24px"><div class="pilha" style="gap:8px;text-align:center;align-items:center"><span class="olho">TEMPORADA</span><h1>Ranking <span style="color:var(--laranja)">Copa Boom</span></h1><p class="sub">Cada campeonato vale pontos. Quem joga mais e vai mais longe sobe no ranking.</p></div>
+<div class="abas" role="tablist" id="abas"><button type="button" role="tab" data-t="eq" aria-selected="true">Equipes</button><button type="button" role="tab" data-t="jg" aria-selected="false">Jogadores</button></div>
+<div id="tabela"><div class="carregando">Carregando ranking…</div></div>
+<section class="cartao cut"><h2>Como funciona a pontuação</h2><div class="grade" id="pontos"></div><p class="ajuda">Contam os campeonatos finalizados. A organização define os pontos no painel.</p></section></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/camp.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP, $ = BOOM.$, tipo = 'eq';
+  var eq = (await db.from('ranking_equipes').select('*').order('pontos', { ascending: false }).limit(100)).data || [];
+  var jg = (await db.from('ranking_jogadores').select('*').order('pontos', { ascending: false }).limit(100)).data || [];
+  var cfg = (await db.from('loja_config').select('pontos_ranking').eq('id', 1).maybeSingle()).data || {};
+  var P = cfg.pontos_ranking || {}, NOMES = [['campeao', 'Campeão'], ['vice', 'Vice'], ['terceiro', '3º lugar'], ['semifinal', 'Semifinal'], ['quartas', 'Quartas'], ['participacao', 'Participação']];
+  $('pontos').innerHTML = NOMES.map(function (n, i) { return '<div class="membro" style="flex-direction:column;align-items:flex-start;gap:2px' + (i === 0 ? ';border-color:var(--laranja)' : '') + '"><span class="ajuda">' + n[1] + '</span><b class="titulo" style="font-size:22px">' + (P[n[0]] || 0) + ' pts</b></div>'; }).join('');
+  function desenhar() {
+    var l = tipo === 'eq' ? eq : jg;
+    if (!l.length) { $('tabela').innerHTML = '<div class="vazio">O ranking começa a contar quando o primeiro campeonato terminar.</div>'; return; }
+    $('tabela').innerHTML = '<div class="rolar"><table class="tabela"><thead><tr><th>#</th><th>' + (tipo === 'eq' ? 'EQUIPE' : 'JOGADOR') + '</th><th>CAMPEONATOS</th><th>TÍTULOS</th><th>PONTOS</th></tr></thead><tbody>' +
+      l.map(function (x, i) { var link = tipo === 'eq' ? '../equipe/?id=' + x.equipe_id : '../jogador/?n=' + encodeURIComponent(x.nick); return '<tr><td><span class="selo ' + (i < 3 ? 'lar' : 'lin') + '">' + (i + 1) + '</span></td><td><a href="' + link + '" style="color:#fff;font-weight:800;text-decoration:none">' + C.esc(tipo === 'eq' ? x.nome : '@' + x.nick) + '</a></td><td>' + x.campeonatos + '</td><td>' + x.titulos + '</td><td class="titulo" style="font-size:18px">' + x.pontos + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  $('abas').querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { tipo = b.dataset.t; $('abas').querySelectorAll('[data-t]').forEach(function (x) { x.setAttribute('aria-selected', x === b ? 'true' : 'false'); }); desenhar(); }; });
+  desenhar();
+})();
+</script>
+</body>
+</html>

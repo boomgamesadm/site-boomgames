@@ -49,3 +49,18 @@ window.CAMP = (function () {
   }
   return { STATUS: STATUS, INSC: INSC, FORMATO: FORMATO, esc: esc, selo: selo, statusInsc: statusInsc, capa: capa, dinheiro: dinheiro, data: data, dataHora: dataHora, slug: slug, param: param, pix: pix };
 })();
+// ---- chaveamento
+window.CAMP.FASES = { grupos: 'Fase de grupos', '16avos': '16 avos de final', oitavas: 'Oitavas de final', quartas: 'Quartas de final', semifinal: 'Semifinais', final: 'Grande final', terceiro: 'Disputa de 3º lugar' };
+window.CAMP.ORDEM_FASE = ['grupos', '16avos', 'oitavas', 'quartas', 'semifinal', 'terceiro', 'final'];
+window.CAMP.STATUS_JOGO = { agendada: ['AGENDADA', 'lin'], em_andamento: ['EM ANDAMENTO', 'br'], aguardando_resultado: ['AGUARDANDO RESULTADO', 'po'], publicada: ['ENCERRADA', 'cz'] };
+window.CAMP.cartaoJogo = function (p, E, link) {
+  var C = window.CAMP, esc = C.esc;
+  function lado(eq, pl, rot) {
+    var e = eq ? E[eq] : null, cls = 'lado';
+    if (!e) cls += ' vaz'; else if (p.status === 'publicada' && p.vencedor_id) cls += (p.vencedor_id === eq ? ' venc' : ' perd');
+    return '<div class="' + cls + '"><span class="sg">' + esc(e ? e.sigla : '?') + '</span><span class="n">' + esc(e ? e.nome : (rot || 'A definir')) + '</span><span class="pl">' + (p.status === 'publicada' && pl != null ? pl : '') + '</span></div>';
+  }
+  var info = p.status === 'em_andamento' ? 'EM ANDAMENTO' : p.status === 'publicada' ? (p.equipe_a && p.equipe_b ? 'ENCERRADA' : 'FOLGA') : (p.inicio ? C.dataHora(p.inicio) : 'A DEFINIR');
+  return '<a class="jogo' + (p.status === 'em_andamento' ? ' ao-vivo' : '') + '" href="' + (link || '../partida/') + '?id=' + p.id + '"><div class="topo-j"><span>' + esc(p.codigo || '') + (p.serie ? ' · ' + esc(p.serie) : '') + '</span><span>' + info + '</span></div>' +
+    lado(p.equipe_a, p.placar_a, p.rotulo_a) + lado(p.equipe_b, p.placar_b, p.rotulo_b) + '</a>';
+};

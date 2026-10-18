@@ -56,7 +56,11 @@
 <div class="abas" role="tablist" aria-label="Áreas do painel">
 <button type="button" role="tab" data-aba="campeonatos" aria-selected="true">Campeonatos</button>
 <button type="button" role="tab" data-aba="inscricoes" aria-selected="false">Inscrições</button>
+<button type="button" role="tab" data-aba="chave" aria-selected="false">Chaveamento</button>
+<button type="button" role="tab" data-aba="partidas" aria-selected="false">Partidas</button>
 <button type="button" role="tab" data-aba="loja" aria-selected="false">Dados da loja</button>
+<button type="button" role="tab" data-aba="artes" aria-selected="false">Artes</button>
+<button type="button" role="tab" data-aba="historico" aria-selected="false">Histórico e uso</button>
 </div>
 
 <div data-painel="campeonatos" class="pilha" style="gap:18px">
@@ -105,6 +109,33 @@
 <div id="lista-insc" class="pilha" style="gap:12px"></div>
 </div>
 
+
+<div data-painel="chave" hidden class="pilha" style="gap:18px">
+<div class="linha entre"><h2>Chaveamento</h2><div class="campo" style="min-width:260px"><label for="ch-camp" class="sr">Campeonato</label><select id="ch-camp"></select></div></div>
+<div id="ch-conteudo" class="pilha" style="gap:16px"></div>
+</div>
+<div data-painel="partidas" hidden class="pilha" style="gap:18px">
+<div class="linha entre"><h2>Partidas e resultados</h2><div class="campo" style="min-width:260px"><label for="pt-camp" class="sr">Campeonato</label><select id="pt-camp"></select></div></div>
+<div id="pt-conteudo" class="pilha" style="gap:12px"></div>
+</div>
+<div data-painel="artes" hidden class="pilha" style="gap:18px">
+<h2>Artes para redes sociais</h2>
+<p class="ajuda">Escolha o modelo, gere a imagem com os dados reais e baixe para postar no Instagram.</p>
+<div class="grade">
+<div class="campo"><label for="ar-modelo">Modelo</label><select id="ar-modelo"><option value="inscricoes">Inscrições abertas (post)</option><option value="resultado">Resultado de partida (post)</option><option value="campeao">Campeão (post)</option><option value="agenda">Agenda do dia (story)</option></select></div>
+<div class="campo"><label for="ar-camp">Campeonato</label><select id="ar-camp"></select></div>
+<div class="campo" id="ar-partida-box"><label for="ar-partida">Partida</label><select id="ar-partida"></select></div>
+</div>
+<div class="linha"><button type="button" class="btn" id="ar-gerar">Gerar arte</button><a class="btn sec" id="ar-baixar" download="arte-boom-games.png" hidden>Baixar imagem</a></div>
+<canvas id="ar-canvas" width="1080" height="1080" style="width:min(100%,420px);height:auto;border:1px solid #2E2E34;align-self:flex-start"></canvas>
+</div>
+<div data-painel="historico" hidden class="pilha" style="gap:18px">
+<h2>Uso do sistema</h2>
+<div class="grade" id="uso"></div>
+<p class="ajuda">O plano gratuito do Supabase permite 50 mil usuários ativos por mês, 500 MB de banco e 1 GB de arquivos. Para ver o uso exato, abra o Supabase → <b>Usage</b>.</p>
+<h2>Histórico de alterações</h2>
+<div id="hist" class="rolar"></div>
+</div>
 <div data-painel="loja" hidden class="pilha" style="gap:18px">
 <form id="form-loja" class="cartao cut" novalidate>
 <h2>Contato e endereço</h2>
@@ -143,6 +174,7 @@
 <script src="../assets/js/config.js"></script>
 <script src="../assets/js/app.js"></script>
 <script src="../assets/js/camp.js"></script>
+<script src="../assets/js/admin2.js"></script>
 <script src="../assets/js/admin.js"></script>
 </body>
 </html>

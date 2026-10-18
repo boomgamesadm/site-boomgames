@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR" data-raiz="../../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jogador · Boom Games</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/img/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="../../assets/img/favicon-48.png?v=2">
+<link rel="icon" type="image/svg+xml" href="../../assets/img/icone.svg?v=2">
+<link rel="apple-touch-icon" href="../../assets/img/icone-180.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body>
+<header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
+<main>
+<div id="conteudo" class="pilha" style="gap:24px"><div class="carregando">Carregando perfil…</div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/camp.js"></script>
+<script>
+(async function () {
+  var db = BOOM.db, C = CAMP, alvo = BOOM.$('conteudo'), n = C.param('n');
+  var j = (await db.from('jogadores_publicos').select('*').eq('nick', n || '').maybeSingle()).data;
+  if (!j) { alvo.innerHTML = '<div class="vazio">Jogador não encontrado.</div>'; return; }
+  document.title = '@' + j.nick + ' · Boom Games';
+  var mem = (await db.from('equipe_membros').select('*').eq('jogador_id', j.id).eq('status', 'aceito')).data || [];
+  var eqs = mem.length ? ((await db.from('equipes').select('id, nome, sigla').in('id', mem.map(function (m) { return m.equipe_id; }))).data || []) : [];
+  var rk = (await db.from('ranking_jogadores').select('*').eq('jogador_id', j.id).maybeSingle()).data;
+  alvo.innerHTML = '<section class="linha" style="gap:22px"><div class="cut" style="width:110px;height:110px;background:linear-gradient(145deg,var(--laranja),var(--laranja-esc));display:flex;align-items:center;justify-content:center;font-family:Chakra Petch,sans-serif;font-weight:700;font-size:48px;color:#0A0A0B">' + C.esc(j.nick[0].toUpperCase()) + '</div>' +
+    '<div class="pilha" style="gap:6px"><span class="olho">PERFIL DO JOGADOR</span><h1 style="text-transform:none">@' + C.esc(j.nick) + '</h1><div class="linha">' + (j.cidade ? '<span class="sub">' + C.esc(j.cidade) + '</span>' : '') + (j.jogos || []).map(function (g) { return '<span class="selo lin">' + C.esc(g.toUpperCase()) + '</span>'; }).join('') + '</div></div></section>' +
+    '<div class="grade">' + [['CAMPEONATOS', rk ? rk.campeonatos : 0], ['TÍTULOS', rk ? rk.titulos : 0], ['PONTOS NO RANKING', rk ? rk.pontos : 0], ['EQUIPES', eqs.length]].map(function (x) { return '<div class="cartao cut" style="gap:4px;padding:18px"><span class="olho" style="color:var(--apagado)">' + x[0] + '</span><span class="titulo" style="font-size:34px">' + x[1] + '</span></div>'; }).join('') + '</div>' +
+    '<section class="pilha"><h2>Equipes</h2>' + (eqs.length ? '<div class="grade">' + eqs.map(function (e) { return '<a class="membro" style="text-decoration:none;color:#fff" href="../equipe/?id=' + e.id + '"><span class="av on">' + C.esc(e.sigla) + '</span><span class="nm"><b>' + C.esc(e.nome) + '</b></span></a>'; }).join('') + '</div>' : '<div class="vazio">Ainda sem equipe.</div>') + '</section>';
+})();
+</script>
+</body>
+</html>

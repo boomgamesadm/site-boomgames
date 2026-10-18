@@ -10,6 +10,7 @@
     document.querySelectorAll('[data-aba]').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.aba === nome ? 'true' : 'false'); });
     document.querySelectorAll('[data-painel]').forEach(function (p) { p.hidden = p.dataset.painel !== nome; });
     if (nome === 'inscricoes') carregarInscricoes();
+    if (window.ADMIN2 && window.ADMIN2[nome]) window.ADMIN2[nome]();
   }
   document.querySelectorAll('[data-aba]').forEach(function (b) { b.addEventListener('click', function () { aba(b.dataset.aba); }); });
 
@@ -127,9 +128,16 @@
       else if (st === 'aguardando_pagamento' || st === 'expirada') acoes += '<button type="button" class="btn" style="min-height:40px" data-pago="' + i.id + '">Marcar como pago</button>';
       if (st === 'lista_espera') acoes += '<button type="button" class="btn" style="min-height:40px" data-liberar="' + i.id + '">Liberar vaga (24h para pagar)</button>';
       if (st !== 'recusada') acoes += '<button type="button" class="btn sec" style="min-height:40px" data-recins="' + i.id + '">Recusar inscrição</button>';
-      var zap = cap.whatsapp ? 'https://wa.me/' + (cap.whatsapp.replace(/\D/g, '').length <= 11 ? '55' : '') + cap.whatsapp.replace(/\D/g, '') : null;
+      var camp = camps.filter(function (k) { return String(k.id) === String(cid); })[0] || {};
+      var msgs = { confirmada: 'Vaga confirmada! A equipe ' + e.nome + ' está garantida na ' + camp.nome + '. Fiquem de olho no chaveamento no site.',
+        aguardando_pagamento: 'A inscrição da ' + e.nome + ' na ' + camp.nome + ' (código ' + i.codigo + ') está aguardando pagamento. Podemos combinar?',
+        expirada: 'A reserva da ' + e.nome + ' na ' + camp.nome + ' expirou. Se ainda quiserem participar, é só reservar de novo pelo site.',
+        pagamento_em_analise: 'Recebemos o comprovante da ' + e.nome + ' na ' + camp.nome + '. Estamos conferindo!',
+        lista_espera: 'A ' + e.nome + ' está na lista de espera da ' + camp.nome + '. Avisamos se abrir vaga.',
+        recusada: 'A inscrição da ' + e.nome + ' na ' + camp.nome + ' não foi aprovada' + (i.motivo ? ': ' + i.motivo : '.') };
+      var zap = cap.whatsapp ? 'https://wa.me/' + (cap.whatsapp.replace(/\D/g, '').length <= 11 ? '55' : '') + cap.whatsapp.replace(/\D/g, '') + '?text=' + encodeURIComponent('Olá, @' + (cap.nick || '') + '! Boom Games aqui. ' + (msgs[st] || '')) : null;
       return '<article class="cartao cut" style="gap:12px"><div class="linha entre"><div class="linha"><span class="membro" style="padding:0;border:0;background:none"><span class="av on">' + C.esc(e.sigla || '?') + '</span></span><div class="pilha" style="gap:2px"><b class="titulo" style="font-size:20px">' + C.esc(e.nome || '') + '</b><small class="ajuda">Código ' + C.esc(i.codigo) + ' · ' + C.dataHora(i.criado_em) + '</small></div></div>' + C.selo(C.INSC, st) + '</div>' +
-        '<div class="ajuda">Capitão: <b style="color:#fff">' + C.esc(cap.nome || '') + '</b> (@' + C.esc(cap.nick || '') + ')' + (zap ? ' · <a href="' + zap + '" target="_blank" rel="noopener">WhatsApp ' + C.esc(cap.whatsapp) + '</a>' : '') + '</div>' +
+        '<div class="ajuda">Capitão: <b style="color:#fff">' + C.esc(cap.nome || '') + '</b> (@' + C.esc(cap.nick || '') + ')' + (zap ? ' · <a href="' + zap + '" target="_blank" rel="noopener">Avisar no WhatsApp (' + C.esc(cap.whatsapp) + ')</a>' : '') + '</div>' +
         '<div class="linha" style="gap:6px">' + jog + '</div>' + (i.motivo ? '<div class="aviso">Motivo: ' + C.esc(i.motivo) + '</div>' : '') +
         '<div class="linha" style="gap:8px;justify-content:flex-end">' + acoes + '</div></article>';
     }).join('');

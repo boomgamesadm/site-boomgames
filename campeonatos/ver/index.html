@@ -15,7 +15,7 @@
 <body>
 <header class="topo"><div class="topo-in"><a href="../../" aria-label="Boom Games — página inicial"><img src="../../assets/img/logo-boom-games.png" alt="Boom Games"></a><nav aria-label="Menu"><a href="../../" class="esconde">Loja</a><a href="../../campeonatos/">Campeonatos</a><a href="../../conta/">Minha conta</a></nav></div></header>
 <main>
-<div id="conteudo" class="pilha" style="gap:28px"><div class="carregando">Carregando campeonato…</div></div>
+<div id="conteudo" class="pilha" style="gap:26px"><div class="carregando">Carregando campeonato…</div></div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../../assets/js/config.js"></script>
@@ -23,37 +23,90 @@
 <script src="../../assets/js/camp.js"></script>
 <script>
 (async function () {
-  var db = BOOM.db, C = CAMP, slug = C.param('c');
-  var r = await db.from('campeonatos').select('*').eq('slug', slug || '').maybeSingle();
-  var c = r.data;
-  if (!c) { BOOM.$('conteudo').innerHTML = '<div class="vazio">Campeonato não encontrado. <a href="../">Ver todos os campeonatos</a></div>'; return; }
-  document.title = c.nome + ' · Boom Games';
-  var oc = (await db.rpc('vagas_ocupadas', { camp: c.id })).data || 0;
-  var conf = await db.from('inscricoes').select('equipe_id').eq('campeonato_id', c.id).eq('status', 'confirmada');
-  var ids = (conf.data || []).map(function (x) { return x.equipe_id; });
-  var equipes = ids.length ? ((await db.from('equipes').select('id, nome, sigla').in('id', ids)).data || []) : [];
-  var aberto = c.status === 'inscricoes_abertas';
-  var premios = [['1º', c.premio_1], ['2º', c.premio_2], ['3º', c.premio_3]].filter(function (p) { return p[1]; });
-  BOOM.$('conteudo').innerHTML =
-    '<a href="../" class="ajuda">← Todos os campeonatos</a>' +
-    '<div class="linha" style="gap:28px;align-items:stretch">' +
-      '<div class="cut" style="flex:1 1 420px;min-height:240px;display:flex">' + C.capa(c, true).replace('class="capa"', 'class="capa" style="flex:1;min-height:240px"') + '</div>' +
-      '<div class="pilha" style="flex:1 1 340px;gap:14px;justify-content:center">' +
-        '<h1>' + C.esc(c.nome) + '</h1>' + (c.edicao ? '<span class="olho">' + C.esc(c.edicao) + '</span>' : '') +
-        '<span class="sub">' + C.esc([c.plataforma, c.modalidade, C.FORMATO[c.formato]].filter(Boolean).join(' · ')) + '</span>' +
-        (aberto ? '<a class="btn" href="../inscrever/?c=' + encodeURIComponent(c.slug) + '" style="align-self:flex-start">INSCREVER MINHA EQUIPE</a>' : '<span>' + C.selo(C.STATUS, c.status) + '</span>') +
-      '</div></div>' +
-    '<dl class="dados cartao cut" style="margin:0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">' +
-      '<div><dt>DATA DO EVENTO</dt><dd>' + C.data(c.data_evento) + '</dd></div>' +
-      '<div><dt>INSCRIÇÕES ATÉ</dt><dd>' + C.dataHora(c.inscricoes_fim) + '</dd></div>' +
-      '<div><dt>VAGAS</dt><dd>' + oc + ' de ' + c.vagas + '</dd></div>' +
-      '<div><dt>INSCRIÇÃO</dt><dd>' + (Number(c.valor_inscricao) > 0 ? C.dinheiro(c.valor_inscricao) + (c.tamanho_elenco > 1 ? ' por equipe' : '') : 'Gratuita') + '</dd></div>' +
-      '<div><dt>ELENCO</dt><dd>' + c.tamanho_elenco + (c.max_reservas ? ' + ' + c.max_reservas + ' reserva' : '') + '</dd></div>' +
-      '<div><dt>LOCAL</dt><dd>Boom Games</dd></div></dl>' +
-    (premios.length ? '<section class="pilha"><h2>Premiação</h2><div class="grade">' + premios.map(function (p, i) { return '<div class="cartao cut' + (i === 0 ? ' destaque' : '') + '" style="gap:6px"><span class="olho">' + p[0] + ' LUGAR</span><span class="titulo" style="font-size:24px">' + C.esc(p[1]) + '</span></div>'; }).join('') + '</div></section>' : '') +
-    '<section class="pilha"><h2>Equipes confirmadas <span style="color:var(--apagado)">· ' + equipes.length + '</span></h2>' +
-      (equipes.length ? '<div class="grade">' + equipes.map(function (e) { return '<div class="membro"><span class="av on">' + C.esc(e.sigla) + '</span><span class="nm"><b>' + C.esc(e.nome) + '</b></span></div>'; }).join('') + '</div>' : '<div class="vazio">Nenhuma equipe confirmada ainda.' + (aberto ? ' Seja a primeira!' : '') + '</div>') + '</section>' +
-    (c.regulamento ? '<section class="pilha"><h2>Regulamento</h2><div class="cartao cut" style="white-space:pre-line;color:var(--suave);line-height:1.7">' + C.esc(c.regulamento) + '</div></section>' : '');
+  var db = BOOM.db, C = CAMP, $ = BOOM.$, alvo = $('conteudo'), slug = C.param('c');
+  var c, E = {}, partidas = [], grupos = [], classif = [], equipesConf = [], aba = location.hash.replace('#', '') || null, oc = 0;
+  async function carregar() {
+    c = (await db.from('campeonatos').select('*').eq('slug', slug || '').maybeSingle()).data;
+    if (!c) { alvo.innerHTML = '<div class="vazio">Campeonato não encontrado. <a href="../">Ver todos os campeonatos</a></div>'; return false; }
+    document.title = c.nome + ' · Boom Games';
+    oc = (await db.rpc('vagas_ocupadas', { camp: c.id })).data || 0;
+    var conf = (await db.from('inscricoes').select('equipe_id').eq('campeonato_id', c.id).eq('status', 'confirmada')).data || [];
+    partidas = c.chaveamento_publicado ? ((await db.from('partidas').select('*').eq('campeonato_id', c.id).order('ordem')).data || []) : [];
+    grupos = c.chaveamento_publicado ? ((await db.from('grupos').select('*').eq('campeonato_id', c.id).order('nome')).data || []) : [];
+    classif = grupos.length ? ((await db.from('classificacao').select('*').eq('campeonato_id', c.id)).data || []) : [];
+    var ids = conf.map(function (x) { return x.equipe_id; });
+    partidas.forEach(function (p) { [p.equipe_a, p.equipe_b].forEach(function (x) { if (x && ids.indexOf(x) < 0) ids.push(x); }); });
+    var eqs = ids.length ? ((await db.from('equipes').select('id, nome, sigla').in('id', ids)).data || []) : [];
+    E = {}; eqs.forEach(function (e) { E[e.id] = e; });
+    equipesConf = conf.map(function (x) { return E[x.equipe_id]; }).filter(Boolean);
+    if (!aba) aba = c.chaveamento_publicado ? 'chaveamento' : 'geral';
+    return true;
+  }
+  function abas() {
+    var l = [['geral', 'Geral'], ['equipes', 'Equipes (' + equipesConf.length + ')']];
+    if (grupos.length) l.push(['grupos', 'Grupos']);
+    if (partidas.some(function (p) { return p.fase !== 'grupos'; })) l.push(['chaveamento', 'Chaveamento']);
+    if (partidas.length) l.push(['partidas', 'Partidas']);
+    if (c.regulamento) l.push(['regulamento', 'Regulamento']);
+    if (!l.some(function (x) { return x[0] === aba; })) aba = 'geral';
+    return '<div class="abas" role="tablist">' + l.map(function (x) { return '<button type="button" role="tab" data-aba="' + x[0] + '" aria-selected="' + (x[0] === aba) + '">' + x[1] + '</button>'; }).join('') + '</div>';
+  }
+  function geral() {
+    var aberto = c.status === 'inscricoes_abertas';
+    var premios = [['1º', c.premio_1], ['2º', c.premio_2], ['3º', c.premio_3]].filter(function (p) { return p[1]; });
+    return '<dl class="dados cartao cut" style="margin:0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">' +
+      '<div><dt>DATA DO EVENTO</dt><dd>' + C.data(c.data_evento) + '</dd></div><div><dt>INSCRIÇÕES ATÉ</dt><dd>' + C.dataHora(c.inscricoes_fim) + '</dd></div>' +
+      '<div><dt>VAGAS</dt><dd>' + oc + ' de ' + c.vagas + '</dd></div><div><dt>INSCRIÇÃO</dt><dd>' + (Number(c.valor_inscricao) > 0 ? C.dinheiro(c.valor_inscricao) : 'Gratuita') + '</dd></div>' +
+      '<div><dt>ELENCO</dt><dd>' + c.tamanho_elenco + (c.max_reservas ? ' + ' + c.max_reservas + ' reserva' : '') + '</dd></div><div><dt>FORMATO</dt><dd>' + C.esc(C.FORMATO[c.formato] || '') + '</dd></div></dl>' +
+      (premios.length ? '<section class="pilha"><h2>Premiação</h2><div class="grade">' + premios.map(function (p, i) { return '<div class="cartao cut' + (i === 0 ? ' destaque' : '') + '" style="gap:6px"><span class="olho">' + p[0] + ' LUGAR</span><span class="titulo" style="font-size:24px">' + C.esc(p[1]) + '</span></div>'; }).join('') + '</div></section>' : '') +
+      (aberto ? '<a class="btn" href="../inscrever/?c=' + encodeURIComponent(c.slug) + '" style="align-self:flex-start">INSCREVER MINHA EQUIPE</a>' : '');
+  }
+  function equipes() {
+    return equipesConf.length ? '<div class="grade">' + equipesConf.map(function (e) { return '<a class="membro" style="text-decoration:none;color:#fff" href="../equipe/?id=' + e.id + '"><span class="av on">' + C.esc(e.sigla) + '</span><span class="nm"><b>' + C.esc(e.nome) + '</b></span></a>'; }).join('') + '</div>'
+      : '<div class="vazio">Nenhuma equipe confirmada ainda.</div>';
+  }
+  function tabelaGrupos() {
+    return '<div class="grade" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))">' + grupos.map(function (g) {
+      var linhas = classif.filter(function (x) { return x.grupo_id === g.id; }).sort(function (a, b) { return b.pontos - a.pontos || b.saldo - a.saldo || b.pro - a.pro; });
+      return '<section class="cartao cut" style="gap:10px;padding:18px"><h3 class="titulo" style="font-size:20px">' + C.esc(g.nome) + '</h3><div class="rolar"><table class="tabela"><thead><tr><th>#</th><th>EQUIPE</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SALDO</th><th>PTS</th></tr></thead><tbody>' +
+        linhas.map(function (l, i) { var e = E[l.equipe_id] || {}; return '<tr><td><span class="selo ' + (i < (c.classificados_por_grupo || 2) && c.formato === 'grupos_mata' ? 'lar' : 'lin') + '">' + (i + 1) + '</span></td><td><a href="../equipe/?id=' + l.equipe_id + '" style="color:#fff;font-weight:700;text-decoration:none">' + C.esc(e.nome || '') + '</a></td><td>' + l.jogos + '</td><td>' + l.vitorias + '</td><td>' + l.empates + '</td><td>' + l.derrotas + '</td><td>' + (l.saldo > 0 ? '+' : '') + l.saldo + '</td><td class="titulo" style="font-size:17px">' + l.pontos + '</td></tr>'; }).join('') +
+        '</tbody></table></div></section>';
+    }).join('') + '</div>';
+  }
+  function chave() {
+    var mm = partidas.filter(function (p) { return p.fase !== 'grupos' && p.fase !== 'terceiro'; });
+    var fases = C.ORDEM_FASE.filter(function (f) { return mm.some(function (p) { return p.fase === f; }); });
+    var h = '<div class="chave">' + fases.map(function (f) { return '<div class="col"><h3>' + C.esc((C.FASES[f] || f).toUpperCase()) + '</h3>' + mm.filter(function (p) { return p.fase === f; }).map(function (p) { return C.cartaoJogo(p, E); }).join('') + '</div>'; }).join('') + '</div>';
+    var t = partidas.filter(function (p) { return p.fase === 'terceiro'; });
+    if (t.length) h += '<section class="pilha" style="max-width:280px"><h3 class="olho">DISPUTA DE 3º LUGAR</h3>' + C.cartaoJogo(t[0], E) + '</section>';
+    return h + '<p class="ajuda">Deslize para o lado para ver todas as fases. Toque numa partida para ver os detalhes.</p>';
+  }
+  function lista() {
+    var ord = partidas.slice().sort(function (a, b) { return (a.inicio || '9') < (b.inicio || '9') ? -1 : (a.inicio || '9') > (b.inicio || '9') ? 1 : a.ordem - b.ordem; });
+    return '<div class="grade" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))">' + ord.map(function (p) { return '<div class="pilha" style="gap:6px"><span class="ajuda">' + C.esc(C.FASES[p.fase] || p.fase) + '</span>' + C.cartaoJogo(p, E) + '</div>'; }).join('') + '</div>';
+  }
+  function desenhar() {
+    var campeao = c.status === 'finalizado' && c.campeao_id && E[c.campeao_id];
+    var live = c.transmissao_url && c.status === 'em_andamento';
+    var corpo = { geral: geral, equipes: equipes, grupos: tabelaGrupos, chaveamento: chave, partidas: lista, regulamento: function () { return '<div class="cartao cut" style="white-space:pre-line;color:var(--suave);line-height:1.7">' + C.esc(c.regulamento) + '</div>'; } }[aba] || geral;
+    alvo.innerHTML = '<a href="../" class="ajuda">← Todos os campeonatos</a>' +
+      (campeao ? '<section class="campeao-banner cut"><div class="taca cut-sm"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"></path></svg></div><span class="olho">CAMPEÃ DA ' + C.esc(c.nome.toUpperCase()) + '</span><a href="../equipe/?id=' + c.campeao_id + '" style="color:#fff;text-decoration:none"><h1>' + C.esc(campeao.nome) + '</h1></a></section>' : '') +
+      '<div class="linha" style="gap:28px;align-items:stretch"><div class="cut" style="flex:1 1 420px;min-height:220px;display:flex">' + C.capa(c, true).replace('class="capa"', 'class="capa" style="flex:1;min-height:220px"') + '</div>' +
+      '<div class="pilha" style="flex:1 1 340px;gap:12px;justify-content:center"><h1>' + C.esc(c.nome) + '</h1>' + (c.edicao ? '<span class="olho">' + C.esc(c.edicao) + '</span>' : '') +
+      '<span class="sub">' + C.esc([c.plataforma, c.modalidade, C.FORMATO[c.formato]].filter(Boolean).join(' · ')) + '</span><div class="linha">' + C.selo(C.STATUS, c.status) +
+      (live ? '<a class="btn" href="' + C.esc(c.transmissao_url) + '" target="_blank" rel="noopener">● ASSISTIR AO VIVO' + (c.transmissao_plataforma ? ' NA ' + C.esc(c.transmissao_plataforma.toUpperCase()) : '') + '</a>' : '') +
+      '<button type="button" class="btn sec" id="compartilhar">Compartilhar</button></div></div></div>' + abas() + '<div>' + corpo() + '</div>';
+    alvo.querySelectorAll('[data-aba]').forEach(function (b) { b.onclick = function () { aba = b.dataset.aba; history.replaceState(null, '', '#' + aba); desenhar(); }; });
+    $('compartilhar').onclick = function () { var u = location.href; if (navigator.share) navigator.share({ title: c.nome, url: u }); else { navigator.clipboard.writeText(u); $('compartilhar').textContent = 'Link copiado!'; } };
+  }
+  if (await carregar()) {
+    desenhar();
+    var t = null;
+    db.channel('camp-' + c.id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'partidas', filter: 'campeonato_id=eq.' + c.id }, function () { clearTimeout(t); t = setTimeout(async function () { await carregar(); desenhar(); }, 600); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'campeonatos', filter: 'id=eq.' + c.id }, function () { clearTimeout(t); t = setTimeout(async function () { await carregar(); desenhar(); }, 600); })
+      .subscribe();
+  }
 })();
 </script>
 </body>
