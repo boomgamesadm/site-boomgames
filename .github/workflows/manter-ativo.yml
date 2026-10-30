@@ -1,0 +1,14 @@
+name: Manter banco ativo
+on:
+  schedule:
+    - cron: '0 12 */3 * *'
+  workflow_dispatch:
+jobs:
+  visitar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar o banco
+        run: |
+          curl -s -o /dev/null -w "Resposta: %{http_code}\n" \
+            "https://oiobwskhirmuwvwjgnbh.supabase.co/rest/v1/loja_config?select=id&limit=1" \
+            -H "apikey: sb_publishable_uEdN0Ds5IglXlkE7g-Y5NA_wLDghWDW"
