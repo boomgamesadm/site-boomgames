@@ -1,14 +1,22 @@
 name: Manter banco ativo
 on:
   schedule:
-    - cron: '0 12 */3 * *'
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 jobs:
   visitar:
     runs-on: ubuntu-latest
     steps:
       - name: Consultar o banco
+        env:
+          URL: https://oiobwskhirmuwvwjgnbh.supabase.co
+          KEY: sb_publishable_uEdN0Ds5IglXlkE7g-Y5NA_wLDghWDW
         run: |
-          curl -s -o /dev/null -w "Resposta: %{http_code}\n" \
-            "https://oiobwskhirmuwvwjgnbh.supabase.co/rest/v1/loja_config?select=id&limit=1" \
-            -H "apikey: sb_publishable_uEdN0Ds5IglXlkE7g-Y5NA_wLDghWDW"
+          for t in loja_config marcas campeonatos equipes jogadores_publicos; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/rest/v1/$t?select=*&limit=5" -H "apikey: $KEY")
+            echo "$t: $code"
+            if [ "$code" != "200" ]; then falhou=1; fi
+            sleep 3
+          done
+          curl -s -o /dev/null -w "auth: %{http_code}\n" "$URL/auth/v1/health" -H "apikey: $KEY"
+          if [ -n "$falhou" ]; then echo "ATENÇÃO: banco não respondeu. Confira se o projeto foi pausado."; exit 1; fi
